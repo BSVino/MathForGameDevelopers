@@ -12,6 +12,8 @@ You'll find these directories:
 
 **math** - This is where all of the math stuff that we'll be implementing lives.
 
+**content** - When the game is run, it's run in this directory, even though there's no .exe in here. That means it looks for its textures, models, shaders, etc files here.
+
 **renderer** - Shaders and rendering are carried out here. All OpenGL code is contained in these files. To render something, first create a rendering context:
 
 	CRenderingContext c(Application()->GetRenderer(), true):
@@ -45,7 +47,9 @@ And for fragment shaders:
 		}
 	}
 
-This format is used for things like shader .txt files (see below) and material .mat files.
+This format is used for things like shader .txt files.
+
+**include** and **lib** - This code depends on some third party libraries, and they can be found here.
 
 Compiling
 ---------
@@ -72,9 +76,9 @@ Right now only Windows compiling is supported, but I like patches!
 Tinker
 ------
 
-This code is built on top of Tinker, Lunar Workshop's internal game engine. I ripped out a bunch of stuff so that it's much more simpler. As MFGD progresses and new things are learned, I'll add those things back into the engine.
+This code is built on top of Tinker, Lunar Workshop's internal game engine. I ripped out a bunch of stuff so that it's much simpler. As MFGD progresses and new things are learned, I'll add those things back into the engine.
 
-If you want the actual thing you can find it in the [SMAK source code](https://github.com/BSVino/SMAK), it's much more fully featured. It has materials and a GUI and lots of other neat stuff.
+If you want the actual thing you can find it in the [SMAK source code](https://github.com/BSVino/SMAK), it's much more fully featured. It has materials and a console and a GUI and lots of other neat stuff.
 
 Licenses
 --------

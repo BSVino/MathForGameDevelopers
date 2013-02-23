@@ -82,7 +82,6 @@
     <ClCompile Include="renderer\shaders.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="lib\libglew32.lib" />
     <Library Include="lib\libglfw.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

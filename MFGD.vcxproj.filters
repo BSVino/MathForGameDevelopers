@@ -74,9 +74,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="lib\libglew32.lib">
-      <Filter>Libraries</Filter>
-    </Library>
     <Library Include="lib\libglfw.lib">
       <Filter>Libraries</Filter>
     </Library>
