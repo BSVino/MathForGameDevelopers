@@ -1,0 +1,10 @@
+Name: model
+Vertex: pass
+Fragment: model
+
+Defaults
+{
+	bDiffuse: no
+	vecColor: 1 1 1 1
+	flAlpha: 1
+}
