@@ -1,5 +1,7 @@
 #include <common.h>
 
+#include <maths.h>
+
 #include "renderer/application.h"
 #include "renderer/renderer.h"
 #include "renderer/renderingcontext.h"
@@ -27,9 +29,10 @@ public:
 class CCharacter
 {
 public:
-	Point position;
-	Vector velocity;
-	Vector gravity;
+	Point vecPosition;
+	Vector vecVelocity;
+	Vector vecVelocityGoal;
+	Vector vecGravity;
 };
 
 // We'll create a single character named "box"
@@ -40,27 +43,27 @@ bool CGame::KeyPress(int c)
 {
 	if (c == 'W')
 	{
-		box.velocity.z = 15;
+		box.vecVelocityGoal.z = 15;
 		return true;
 	}
 	else if (c == 'A')
 	{
-		box.velocity.x = 15;
+		box.vecVelocityGoal.x = 15;
 		return true;
 	}
 	else if (c == 'S')
 	{
-		box.velocity.z = -15;
+		box.vecVelocityGoal.z = -15;
 		return true;
 	}
 	else if (c == 'D')
 	{
-		box.velocity.x = -15;
+		box.vecVelocityGoal.x = -15;
 		return true;
 	}
 	else if (c == ' ')
 	{
-		box.velocity.y = 2;
+		box.vecVelocity.y = 2;
 		return true;
 	}
 	else
@@ -72,19 +75,19 @@ void CGame::KeyRelease(int c)
 {
 	if (c == 'W')
 	{
-		box.velocity.z = 0;
+		box.vecVelocityGoal.z = 0;
 	}
 	else if (c == 'A')
 	{
-		box.velocity.x = 0;
+		box.vecVelocityGoal.x = 0;
 	}
 	else if (c == 'S')
 	{
-		box.velocity.z = 0;
+		box.vecVelocityGoal.z = 0;
 	}
 	else if (c == 'D')
 	{
-		box.velocity.x = 0;
+		box.vecVelocityGoal.x = 0;
 	}
 	else
 		CApplication::KeyPress(c);
@@ -93,20 +96,23 @@ void CGame::KeyRelease(int c)
 // In this Update() function we need to update all of our characters. Move them around or whatever we want to do.
 void Update(float dt)
 {
-	// Update position and velocity.
-	box.position = box.position + box.velocity * dt;
-	box.velocity = box.velocity + box.gravity * dt;
+	box.vecVelocity.x = Approach(box.vecVelocityGoal.x, box.vecVelocity.x, dt * 65);
+	box.vecVelocity.z = Approach(box.vecVelocityGoal.z, box.vecVelocity.z, dt * 65);
+
+	// Update position and vecVelocity.
+	box.vecPosition = box.vecPosition + box.vecVelocity * dt;
+	box.vecVelocity = box.vecVelocity + box.vecGravity * dt;
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
-	if (box.position.y < 0)
-		box.position.y = 0;
+	if (box.vecPosition.y < 0)
+		box.vecPosition.y = 0;
 }
 
 void Draw(CRenderer* pRenderer)
 {
 	// Tell the renderer how to set up the camera.
-	pRenderer->SetCameraPosition(box.position + Vector(0, 4, -6));
-	pRenderer->SetCameraDirection(Vector(box.position - pRenderer->GetCameraPosition()).Normalized()); // Look at the box
+	pRenderer->SetCameraPosition(box.vecPosition + Vector(0, 4, -6));
+	pRenderer->SetCameraDirection(Vector(box.vecPosition - pRenderer->GetCameraPosition()).Normalized()); // Look at the box
 	pRenderer->SetCameraUp(Vector(0, 1, 0));
 	pRenderer->SetCameraFOV(90);
 	pRenderer->SetCameraNear(0.1f);
@@ -132,7 +138,7 @@ void Draw(CRenderer* pRenderer)
 
 	// Render the player-box
 	r.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
-	r.RenderBox(box.position - Vector(0.5f, 0, 0.5f), box.position + Vector(0.5f, 2, 0.5f));
+	r.RenderBox(box.vecPosition - Vector(0.5f, 0, 0.5f), box.vecPosition + Vector(0.5f, 2, 0.5f));
 
 	// Render some other boxes, so that we can tell when we're moving.
 	r.SetUniform("vecColor", Vector4D(0.3f, 0.9f, 0.5f, 1));
@@ -165,9 +171,9 @@ void Draw(CRenderer* pRenderer)
 void GameLoop(CRenderer* pRenderer)
 {
 	// Initialize the box's position etc
-	box.position = Point(0, 0, 0);
-	box.velocity = Vector(0, 0, 0);
-	box.gravity = Vector(0, -4, 0);
+	box.vecPosition = Point(0, 0, 0);
+	box.vecVelocity = Vector(0, 0, 0);
+	box.vecGravity = Vector(0, -4, 0);
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
