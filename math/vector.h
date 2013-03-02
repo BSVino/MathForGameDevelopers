@@ -24,6 +24,10 @@ public:
 	Vector operator/(float s) const;
 
 	Vector Normalized() const;
+	void Normalize();
+
+	float  Dot(const Vector& v) const;
+	Vector Cross(const Vector& v) const;
 
 public:
 	float x, y, z;

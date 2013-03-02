@@ -27,6 +27,11 @@ Vector Vector::Normalized() const
 	return (*this) / Length();
 }
 
+void Vector::Normalize()
+{
+	(*this) = (*this) / Length();
+}
+
 Vector Vector::operator*(float s) const
 {
 	return Vector(x * s, y * s, z * s);
@@ -45,6 +50,22 @@ float Vector::Length() const
 float Vector::LengthSqr() const
 {
 	return (x*x + y*y + z*z);
+}
+
+float Vector::Dot(const Vector& v) const
+{
+	return x*v.x + y*v.y + z*v.z;
+}
+
+Vector Vector::Cross(const Vector& v) const
+{
+	Vector c;
+
+	c.x = y*v.z - z*v.y;
+	c.y = z*v.x - x*v.z;
+	c.z = x*v.y - y*v.x;
+
+	return c;
 }
 
 Vector operator-(Point a, Point b)
