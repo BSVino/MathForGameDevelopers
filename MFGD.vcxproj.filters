@@ -72,6 +72,9 @@
     <ClCompile Include="math\color.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="math\euler.cpp">
+      <Filter>Source Files\math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib">
