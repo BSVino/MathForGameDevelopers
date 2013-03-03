@@ -30,7 +30,12 @@ public:
 	Vector Cross(const Vector& v) const;
 
 public:
-	float x, y, z;
+	union {
+		struct {
+			float x, y, z;
+		};
+		float v[3];
+	};
 };
 
 class Point
@@ -42,6 +47,13 @@ public:
 		x = X;
 		y = Y;
 		z = Z;
+	}
+
+	Point(const Vector& v)
+	{
+		x = v.x;
+		y = v.y;
+		z = v.z;
 	}
 
 	Point operator+(const Vector& v) const;

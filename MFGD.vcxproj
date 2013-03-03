@@ -71,6 +71,7 @@
     <ClCompile Include="datamanager\data.cpp" />
     <ClCompile Include="datamanager\dataserializer.cpp" />
     <ClCompile Include="game\main.cpp" />
+    <ClCompile Include="math\collision.cpp" />
     <ClCompile Include="math\color.cpp" />
     <ClCompile Include="math\euler.cpp" />
     <ClCompile Include="math\matrix.cpp" />
