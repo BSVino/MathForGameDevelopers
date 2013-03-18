@@ -351,10 +351,17 @@ void Draw(CRenderer* pRenderer)
 	{
 		if (Game()->GetTime() < Game()->GetPuffs()[i].flTimeCreated + flPuffTime)
 		{
-			float flSize = (Game()->GetTime() - Game()->GetPuffs()[i].flTimeCreated  + 0.2f);
+			float flTimeCreated = Game()->GetPuffs()[i].flTimeCreated;
+			float flTimeOver = Game()->GetPuffs()[i].flTimeCreated + flPuffTime;
+			float flStartSize = 0.2f;
+			float flEndSize = 0.5f;
+
+			float flSize = Remap(Game()->GetTime(), flTimeCreated, flTimeOver, flStartSize, flEndSize);
+
 			Vector vecOrigin = Game()->GetPuffs()[i].vecOrigin;
 
-			r.SetUniform("vecColor", Vector4D(1, 0, 0, 1));
+			int iOrange = Remap(Game()->GetTime(), flTimeCreated, flTimeOver, 0, 255);
+			r.SetUniform("vecColor", Color(255, iOrange, 0, 255));
 			r.RenderBox(vecOrigin - Vector(1, 1, 1)*flSize, vecOrigin + Vector(1, 1, 1)*flSize);
 		}
 	}
