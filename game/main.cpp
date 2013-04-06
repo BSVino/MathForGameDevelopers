@@ -46,6 +46,8 @@ public:
 	}
 
 public:
+	void Load();
+
 	virtual bool KeyPress(int c);
 	virtual void KeyRelease(int c);
 	virtual void MouseMotion(int x, int y);
@@ -59,12 +61,18 @@ public:
 	void MakeBulletTracer(const Point& vecStart, const Point& vecEnd);
 	const vector<CBulletTracer>& GetTracers() const { return m_aTracers; }
 
+	void Update(float dt);
+	void Draw();
+	void GameLoop();
+
 private:
 	int m_iLastMouseX;
 	int m_iLastMouseY;
 
 	vector<CPuff> m_aPuffs;
 	vector<CBulletTracer> m_aTracers;
+
+	size_t m_iMonsterTexture;
 };
 
 CGame* Game()
@@ -93,6 +101,11 @@ CCharacter box;
 CCharacter target1;
 CCharacter target2;
 CCharacter target3;
+
+void CGame::Load()
+{
+	m_iMonsterTexture = GetRenderer()->LoadTextureIntoGL("monster.png");
+}
 
 void CGame::MakePuff(const Point& p)
 {
@@ -170,9 +183,9 @@ void CGame::KeyRelease(int c)
 void CGame::MouseMotion(int x, int y)
 {
 	int iMouseMovedX = x - m_iLastMouseX;
-	int iMouseMovedY = y - m_iLastMouseY;
+	int iMouseMovedY = m_iLastMouseY - y; // The data comes in backwards. negative y means the mouse moved up.
 
-	float flSensitivity = 0.01f;
+	float flSensitivity = 0.3f;
 
 	box.angView.p += iMouseMovedY*flSensitivity;
 	box.angView.y += iMouseMovedX*flSensitivity;
@@ -239,7 +252,7 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 
 // In this Update() function we need to update all of our characters. Move them around or whatever we want to do.
 // http://www.youtube.com/watch?v=c4b9lCfSDQM
-void Update(float dt)
+void CGame::Update(float dt)
 {
 	// The approach function http://www.youtube.com/watch?v=qJq7I2DLGzI
 	box.vecMovement.x = Approach(box.vecMovementGoal.x, box.vecMovement.x, dt * 65);
@@ -267,13 +280,15 @@ void Update(float dt)
 		box.vecPosition.y = 0;
 }
 
-void Draw(CRenderer* pRenderer)
+void CGame::Draw()
 {
 	Vector vecForward = box.angView.ToVector();
 	Vector vecUp(0, 1, 0);
 
 	// Cross-product http://www.youtube.com/watch?v=FT7MShdqK6w
 	Vector vecRight = vecUp.Cross(vecForward).Normalized();
+
+	CRenderer* pRenderer = GetRenderer();
 
 	// Tell the renderer how to set up the camera.
 	pRenderer->SetCameraPosition(box.vecPosition - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
@@ -305,17 +320,37 @@ void Draw(CRenderer* pRenderer)
 	r.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
 	r.RenderBox(box.vecPosition - Vector(0.5f, 0, 0.5f), box.vecPosition + Vector(0.5f, 2, 0.5f));
 
-	// Render some other boxes, so that we can tell when we're moving.
-	r.SetUniform("vecColor", Vector4D(0.3f, 0.9f, 0.5f, 1));
+	{
+		CRenderingContext c(pRenderer, true);
 
-	Vector vecBoxPosition = Vector(6, 0, 4);
-	r.RenderBox(target1.vecPosition + target1.aabbSize.vecMin, target1.vecPosition + target1.aabbSize.vecMax);
+		// Render the enemies.
+		c.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
 
-	vecBoxPosition = Vector(3, 0, -2);
-	r.RenderBox(target2.vecPosition + target2.aabbSize.vecMin, target2.vecPosition + target2.aabbSize.vecMax);
+		Vector vecForward, vecRight, vecUp;
+		vecForward = target1.vecPosition - pRenderer->GetCameraPosition();
+		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
+		vecUp = vecForward.Cross(-vecRight).Normalized();
 
-	vecBoxPosition = Vector(-5, 0, 8);
-	r.RenderBox(target3.vecPosition + target3.aabbSize.vecMin, target3.vecPosition + target3.aabbSize.vecMax);
+		c.SetPosition(target1.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
+		c.SetUniform("bDiffuse", true);
+		c.RenderBillboard(m_iMonsterTexture, target1.aabbSize.vecMax.x, vecUp, vecRight);
+
+		vecForward = target2.vecPosition - pRenderer->GetCameraPosition();
+		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
+		vecUp = vecForward.Cross(-vecRight).Normalized();
+
+		c.SetPosition(target2.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
+		c.RenderBillboard(m_iMonsterTexture, target2.aabbSize.vecMax.x, vecUp, vecRight);
+
+		vecForward = target3.vecPosition - pRenderer->GetCameraPosition();
+		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
+		vecUp = vecForward.Cross(-vecRight).Normalized();
+
+		c.SetPosition(target3.vecPosition + Vector(0, target3.aabbSize.GetHeight()/2, 0));
+		c.RenderBillboard(m_iMonsterTexture, target3.aabbSize.vecMax.x, vecUp, vecRight);
+
+		c.SetUniform("bDiffuse", false);
+	}
 
 	// Render the ground.
 	r.SetUniform("vecColor", Vector4D(0.6f, 0.7f, 0.9f, 1));
@@ -360,7 +395,7 @@ void Draw(CRenderer* pRenderer)
 
 			Vector vecOrigin = Game()->GetPuffs()[i].vecOrigin;
 
-			int iOrange = Remap(Game()->GetTime(), flTimeCreated, flTimeOver, 0, 255);
+			int iOrange = (int)Remap(Game()->GetTime(), flTimeCreated, flTimeOver, 0, 255);
 			r.SetUniform("vecColor", Color(255, iOrange, 0, 255));
 			r.RenderBox(vecOrigin - Vector(1, 1, 1)*flSize, vecOrigin + Vector(1, 1, 1)*flSize);
 		}
@@ -373,7 +408,7 @@ void Draw(CRenderer* pRenderer)
 }
 
 // The Game Loop http://www.youtube.com/watch?v=c4b9lCfSDQM
-void GameLoop(CRenderer* pRenderer)
+void CGame::GameLoop()
 {
 	// Initialize the box's position etc
 	box.vecPosition = Point(0, 0, 0);
@@ -412,7 +447,7 @@ void GameLoop(CRenderer* pRenderer)
 
 		Update(dt);
 
-		Draw(pRenderer);
+		Draw();
 	}
 }
 
@@ -425,8 +460,10 @@ int main(int argc, char* argv[])
 	game.OpenWindow(640, 480, false, false);
 	game.SetMouseCursorEnabled(false);
 
+	game.Load();
+
 	// Run the game loop!
-	GameLoop(game.GetRenderer());
+	game.GameLoop();
 
 	return 0;
 }

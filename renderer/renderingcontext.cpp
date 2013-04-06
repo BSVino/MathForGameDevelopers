@@ -421,15 +421,23 @@ void CRenderingContext::RenderBillboard(size_t iTexture, float flRadius, Vector 
 
 	BindTexture(iTexture);
 
+	// The up and right vectors form an orthogonal basis for the plane that the billboarded sprite is in.
+	// That means we can use combinations of these two vectors to find the four vertices of the sprite.
+	// http://youtu.be/puOTwCrEm7Q
+
+	// Pass the vertices of the billboarded sprite into the renderer in counter-clockwise order.
 	BeginRenderTriFan();
-		TexCoord(0.0f, 1.0f);
-		Vertex(-vecRight + vecUp);
 		TexCoord(0.0f, 0.0f);
-		Vertex(-vecRight - vecUp);
+		Vertex(-vecUp - vecRight);
+
 		TexCoord(1.0f, 0.0f);
-		Vertex(vecRight - vecUp);
+		Vertex(-vecUp + vecRight);
+
 		TexCoord(1.0f, 1.0f);
-		Vertex(vecRight + vecUp);
+		Vertex(vecUp + vecRight);
+
+		TexCoord(0.0f, 1.0f);
+		Vertex(vecUp - vecRight);
 	EndRender();
 }
 

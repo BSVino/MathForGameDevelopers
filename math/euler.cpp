@@ -2,15 +2,20 @@
 
 #include "vector.h"
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 Vector EAngle::ToVector() const
 {
 	Vector result;
 
-	result.x = cos(y)*cos(p);
-	result.y = sin(p);
-	result.z = sin(y)*cos(p);
+	// Convert from degrees to radians.
+	float y2 = y/360*2*M_PI;
+	float p2 = p/360*2*M_PI;
+
+	result.x = cos(y2)*cos(p2);
+	result.y = sin(p2);
+	result.z = sin(y2)*cos(p2);
 
 	return result;
 }

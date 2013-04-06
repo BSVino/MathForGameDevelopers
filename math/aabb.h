@@ -13,6 +13,11 @@ public:
 		return result;
 	}
 
+	float GetHeight() const
+	{
+		return vecMax.y-vecMin.y;
+	}
+
 public:
 	Vector vecMin;
 	Vector vecMax;
