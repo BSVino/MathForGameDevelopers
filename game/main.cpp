@@ -316,9 +316,30 @@ void CGame::Draw()
 	// Set the sunlight direction. The y component is -1 so the light is pointing down.
 	r.SetUniform("vecSunlight", Vector(-1, -1, 0.5f).Normalized());
 
-	// Render the player-box
-	r.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
-	r.RenderBox(box.vecPosition - Vector(0.5f, 0, 0.5f), box.vecPosition + Vector(0.5f, 2, 0.5f));
+	{
+		CRenderingContext c(pRenderer, true);
+
+		// Render the player-box
+		c.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
+
+		// Sets the position that the player-box will be rendered
+		c.Translate(box.vecPosition);
+
+		// Create a set of basis vectors that do what we need.
+		Vector vecForward = box.angView.ToVector(); // Euler angles: https://www.youtube.com/watch?v=zZM2uUkEoFw
+		vecForward.y = 0;       // Flatten the angles so that the box doesn't rotate up and down as the player does.
+		vecForward.Normalize(); // Re-normalize, we need all of our basis vectors to be normal vectors (unit-length)
+		Vector vecUp(0, 1, 0);  // The global up vector
+		Vector vecRight = -vecUp.Cross(vecForward).Normalized(); // Cross-product: https://www.youtube.com/watch?v=FT7MShdqK6w
+
+		// Use these basis vectors to make a matrix that will transform the player-box the way we want it.
+		// http://youtu.be/8sqv11x10lc
+		Matrix4x4 mPlayer(vecForward, vecUp, vecRight);
+		c.Transform(mPlayer);
+
+		// Render the player-box
+		c.RenderBox(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
+	}
 
 	{
 		CRenderingContext c(pRenderer, true);

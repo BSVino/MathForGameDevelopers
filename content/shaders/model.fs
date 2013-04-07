@@ -16,8 +16,11 @@ uniform mat4 mGlobal;
 
 void main()
 {
+	// This 3x3 matrix should have the rotation components only. We need it to transform the fragment normals into world space.
+	mat3 mGlobal3x3 = mat3(mGlobal);
+
 	// Dot product of the sunlight vector and the normal vector of this surface
-	float flLightDot = dot(vecSunlight, normalize(vecFragmentNormal));
+	float flLightDot = dot(vecSunlight, normalize(mGlobal3x3*vecFragmentNormal));
 
 	// Remap the light values so that the negative result becomes positive
 	float flLight = RemapVal(flLightDot, -1.0, 0.0, 0.9, 0.4);

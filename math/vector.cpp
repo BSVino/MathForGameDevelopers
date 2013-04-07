@@ -57,6 +57,7 @@ float Vector::Dot(const Vector& v) const
 	return x*v.x + y*v.y + z*v.z;
 }
 
+// Cross-product http://www.youtube.com/watch?v=FT7MShdqK6w
 Vector Vector::Cross(const Vector& v) const
 {
 	Vector c;

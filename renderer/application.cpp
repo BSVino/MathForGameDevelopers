@@ -94,6 +94,7 @@ void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 
 		int iWindowX = (int)(iScreenWidth/2-m_iWindowWidth/2);
 		int iWindowY = (int)(iScreenHeight/2-m_iWindowHeight/2);
+		iWindowY -= 80;    // Move it up a tad so that we can see it better in the videos.
 		glfwSetWindowPos(iWindowX, iWindowY);
 	}
 
