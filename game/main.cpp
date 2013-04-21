@@ -439,17 +439,30 @@ void CGame::GameLoop()
 	box.vecGravity = Vector(0, -10, 0);
 	box.flSpeed = 15;
 
+	Vector vecMonsterMin = Vector(-1, 0, -1);
+	Vector vecMonsterMax = Vector(1, 2, 1);
+
 	target1.vecPosition = Point(6, 0, 4);
-	target1.aabbSize.vecMin = Vector(-1, 0, -1);
-	target1.aabbSize.vecMax = Vector(1, 2, 1);
+	target1.aabbSize.vecMin = vecMonsterMin;
+	target1.aabbSize.vecMax = vecMonsterMax;
 
 	target2.vecPosition = Point(3, 0, -2);
-	target2.aabbSize.vecMin = Vector(-1, 0, -1);
-	target2.aabbSize.vecMax = Vector(1, 2, 1);
+	target2.aabbSize.vecMin = vecMonsterMin;
+	target2.aabbSize.vecMax = vecMonsterMax;
+
+	Vector vecXBasis(1, 0, 0);
+	Vector vecYBasis(0, 1, 0);
+	Vector vecZBasis(0, 0, 1);
+
+	// Make a matrix that can scale the third target so that he's end boss size.
+	// Take each of the coordinate vectors above and scale it by 9. Then the
+	// resulting matrix will scale vectors by a factor of three in each dimension!
+	// http://youtu.be/0QluD4hJp4U
+	Matrix4x4 mBossMatrix(vecXBasis*3, vecYBasis*3, vecZBasis*3);
 
 	target3.vecPosition = Point(-5, 0, 8);
-	target3.aabbSize.vecMin = Vector(-1, 0, -1);
-	target3.aabbSize.vecMax = Vector(1, 2, 1);
+	target3.aabbSize.vecMin = mBossMatrix*vecMonsterMin;
+	target3.aabbSize.vecMax = mBossMatrix*vecMonsterMax;
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
