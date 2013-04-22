@@ -1,4 +1,7 @@
+#define _USE_MATH_DEFINES
+
 #include <vector>
+#include <math.h>
 
 #include <common.h>
 
@@ -53,7 +56,7 @@ public:
 	virtual void MouseMotion(int x, int y);
 	virtual bool MouseInput(int iButton, tinker_mouse_state_t iState);
 
-	bool TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersection);
+	bool TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersection, class CCharacter*& pHit);
 
 	void MakePuff(const Point& vecPuff);
 	const vector<CPuff>& GetPuffs() const { return m_aPuffs; }
@@ -84,6 +87,34 @@ CGame* Game()
 class CCharacter
 {
 public:
+	CCharacter()
+	{
+		flShotTime = -1;
+	}
+
+public:
+	void ShotEffect(CRenderingContext* c)
+	{
+		// flShotTime gets set to the time when the character was last shot.
+		// So, when the character is shot, it will ramp up from 0 to 2pi, or 360 degrees.
+		// (We need to use radians because our system sin/cos functions use radians.)
+		float flTime = (Game()->GetTime() - flShotTime) * 10;
+		if (flShotTime < 0 || flTime > 2*M_PI)
+			return;
+
+		// Create three rotated basis vectors. The X and Z vectors spin around in a circle,
+		// but the Y vector remains facing straight up.
+		// http://youtu.be/6HaDoXWPICQ
+		Vector vecRotateX(cos(flTime), 0, sin(flTime));
+		Vector vecRotateY(0, 1, 0);
+		Vector vecRotateZ(-sin(flTime), 0, cos(flTime));
+
+		// Load the three basis vectors into a matrix and transform our character with them.
+		Matrix4x4 mRotation(vecRotateX, vecRotateY, vecRotateZ);
+		c->Transform(mRotation);
+	}
+
+public:
 	Point  vecPosition;
 	Vector vecMovement;
 	Vector vecMovementGoal;
@@ -92,6 +123,8 @@ public:
 	EAngle angView;
 	float  flSpeed;
 	AABB   aabbSize;
+
+	float  flShotTime;
 };
 
 // This is the player character
@@ -204,10 +237,12 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 		Vector v1 = box.vecPosition + Vector(0, 1, 0) + box.angView.ToVector() * 100;
 
 		Vector vecIntersection;
-		if (TraceLine(v0, v1, vecIntersection))
+		CCharacter* pHit = nullptr;
+		if (TraceLine(v0, v1, vecIntersection, pHit))
 		{
 			MakePuff(vecIntersection);
 			MakeBulletTracer(v0, vecIntersection);
+			pHit->flShotTime = Game()->GetTime();
 		}
 		else
 			MakeBulletTracer(v0, v1);
@@ -219,29 +254,33 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 }
 
 // Trace a line through the world to simulate, eg, a bullet http://www.youtube.com/watch?v=USjbg5QXk3g
-bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersection)
+bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersection, CCharacter*& pHit)
 {
 	float flLowestFraction = 1;
 
 	Vector vecTestIntersection;
 	float flTestFraction;
+	pHit = nullptr;
 
 	if (LineAABBIntersection(target1.aabbSize + target1.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
+		pHit = &target1;
 	}
 
 	if (LineAABBIntersection(target2.aabbSize + target2.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
+		pHit = &target2;
 	}
 
 	if (LineAABBIntersection(target3.aabbSize + target3.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
+		pHit = &target3;
 	}
 
 	if (flLowestFraction < 1)
@@ -344,6 +383,8 @@ void CGame::Draw()
 	{
 		CRenderingContext c(pRenderer, true);
 
+		c.SetBackCulling(false);
+
 		// Render the enemies.
 		c.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
 
@@ -352,20 +393,30 @@ void CGame::Draw()
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
+		target1.ShotEffect(&c);
+
 		c.SetPosition(target1.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.SetUniform("bDiffuse", true);
 		c.RenderBillboard(m_iMonsterTexture, target1.aabbSize.vecMax.x, vecUp, vecRight);
+
+		c.ResetTransformations();
 
 		vecForward = target2.vecPosition - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
+		target2.ShotEffect(&c);
+
 		c.SetPosition(target2.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target2.aabbSize.vecMax.x, vecUp, vecRight);
+
+		c.ResetTransformations();
 
 		vecForward = target3.vecPosition - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
+
+		target3.ShotEffect(&c);
 
 		c.SetPosition(target3.vecPosition + Vector(0, target3.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target3.aabbSize.vecMax.x, vecUp, vecRight);
