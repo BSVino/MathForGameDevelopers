@@ -56,7 +56,7 @@ Compiling
 
 This project has no dependencies and should compile out-of-the-box. If something doesn't work for you please let me know.
 
-1. Download and install Visual Studio 2010.
+1. Download and install Visual Studio 2010 Express.
 2. Download the MFGD project files and unpack them somewhere to your hard drive.
 3. Double click the MFGD.sln file. Visual Studio should appear.
 4. Press F7 to compile the game.
