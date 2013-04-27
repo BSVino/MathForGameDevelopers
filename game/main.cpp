@@ -152,6 +152,11 @@ CCharacter target1;
 CCharacter target2;
 CCharacter target3;
 
+CCharacter prop1;
+CCharacter prop2;
+CCharacter prop3;
+CCharacter prop4;
+
 void CGame::Load()
 {
 	m_iMonsterTexture = GetRenderer()->LoadTextureIntoGL("monster.png");
@@ -300,6 +305,34 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		pHit = &target3;
 	}
 
+	if (LineAABBIntersection(prop1.aabbSize + prop1.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	{
+		vecIntersection = vecTestIntersection;
+		flLowestFraction = flTestFraction;
+		pHit = &prop1;
+	}
+
+	if (LineAABBIntersection(prop2.aabbSize + prop2.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	{
+		vecIntersection = vecTestIntersection;
+		flLowestFraction = flTestFraction;
+		pHit = &prop2;
+	}
+
+	if (LineAABBIntersection(prop3.aabbSize + prop3.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	{
+		vecIntersection = vecTestIntersection;
+		flLowestFraction = flTestFraction;
+		pHit = &prop3;
+	}
+
+	if (LineAABBIntersection(prop4.aabbSize + prop4.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	{
+		vecIntersection = vecTestIntersection;
+		flLowestFraction = flTestFraction;
+		pHit = &prop4;
+	}
+
 	if (flLowestFraction < 1)
 		return true;
 
@@ -334,6 +367,28 @@ void CGame::Update(float dt)
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
 	if (box.mTransform.GetTranslation().y < 0)
 		box.mTransform.v[3].y = 0;
+
+	// Grab the player's translation and make a translation only matrix. http://www.youtube.com/watch?v=iCazI3nKBf0
+	Vector vecPosition = box.mTransform.GetTranslation();
+	Matrix4x4 mPlayerTranslation;
+	mPlayerTranslation.SetTranslation(vecPosition);
+
+	// Create a set of basis vectors that do what we need.
+	vecForward = box.angView.ToVector(); // Euler angles: https://www.youtube.com/watch?v=zZM2uUkEoFw
+	vecForward.y = 0;       // Flatten the angles so that the box doesn't rotate up and down as the player does.
+	vecForward.Normalize(); // Re-normalize, we need all of our basis vectors to be normal vectors (unit-length)
+	vecUp = Vector(0, 1, 0);  // The global up vector
+	vecRight = -vecUp.Cross(vecForward).Normalized(); // Cross-product: https://www.youtube.com/watch?v=FT7MShdqK6w
+
+	// Use these basis vectors to make a matrix that will transform the player-box the way we want it.
+	// http://youtu.be/8sqv11x10lc
+	Matrix4x4 mPlayerRotation(vecForward, vecUp, vecRight);
+
+	Matrix4x4 mPlayerScaling = Matrix4x4();
+
+	// Produce a transformation matrix from our three TRS matrices.
+	// Order matters! http://youtu.be/7pe1xYzFCvA
+	box.mTransform = mPlayerTranslation * mPlayerRotation * mPlayerScaling;
 }
 
 void CGame::Draw()
@@ -378,20 +433,9 @@ void CGame::Draw()
 		// Render the player-box
 		c.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
 
-		// At the moment this transformation only holds translation. Soon we'll wrap it all up into one matrix.
+		// The transform matrix holds all transformations for the player. Just pass it through to the renderer.
+		// http://youtu.be/7pe1xYzFCvA
 		c.Transform(box.mTransform);
-
-		// Create a set of basis vectors that do what we need.
-		Vector vecForward = box.angView.ToVector(); // Euler angles: https://www.youtube.com/watch?v=zZM2uUkEoFw
-		vecForward.y = 0;       // Flatten the angles so that the box doesn't rotate up and down as the player does.
-		vecForward.Normalize(); // Re-normalize, we need all of our basis vectors to be normal vectors (unit-length)
-		Vector vecUp(0, 1, 0);  // The global up vector
-		Vector vecRight = -vecUp.Cross(vecForward).Normalized(); // Cross-product: https://www.youtube.com/watch?v=FT7MShdqK6w
-
-		// Use these basis vectors to make a matrix that will transform the player-box the way we want it.
-		// http://youtu.be/8sqv11x10lc
-		Matrix4x4 mPlayer(vecForward, vecUp, vecRight);
-		c.Transform(mPlayer);
 
 		// Render the player-box
 		c.RenderBox(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
@@ -439,6 +483,27 @@ void CGame::Draw()
 		c.RenderBillboard(m_iMonsterTexture, target3.aabbSize.vecMax.x, vecUp, vecRight);
 
 		c.SetUniform("bDiffuse", false);
+	}
+
+	{
+		CRenderingContext c(pRenderer, true);
+
+		c.SetBackCulling(false);
+
+		// Render the props.
+		c.SetUniform("vecColor", Vector4D(0.4f, 0.8f, 0.2f, 1));
+
+		c.LoadTransform(prop1.mTransform);
+		c.RenderBox(prop1.aabbSize.vecMin, prop1.aabbSize.vecMax);
+
+		c.LoadTransform(prop2.mTransform);
+		c.RenderBox(prop2.aabbSize.vecMin, prop2.aabbSize.vecMax);
+
+		c.LoadTransform(prop3.mTransform);
+		c.RenderBox(prop3.aabbSize.vecMin, prop3.aabbSize.vecMax);
+
+		c.LoadTransform(prop4.mTransform);
+		c.RenderBox(prop4.aabbSize.vecMin, prop4.aabbSize.vecMax);
 	}
 
 	// Render the ground.
@@ -531,6 +596,47 @@ void CGame::GameLoop()
 	target3.mTransform.SetTranslation(Point(-5, 0, 8));
 	target3.aabbSize.vecMin = mBossMatrix*vecMonsterMin;
 	target3.aabbSize.vecMax = mBossMatrix*vecMonsterMax;
+
+	Vector vecPropMin = Vector(-1, 0, -1);
+	Vector vecPropMax = Vector(1, 2, 1);
+
+	Matrix4x4 mScaling;
+	Matrix4x4 mRotation;
+	Matrix4x4 mTranslation;
+
+	mScaling.SetScale(Vector(2, 1, 4));
+	mRotation.SetRotation(30, Vector(0, 1, 0));
+	mTranslation.SetTranslation(Vector(18, 0, 10));
+
+	// Produce a transformation matrix from our three TRS matrices.
+	// Order matters! http://youtu.be/7pe1xYzFCvA
+	prop1.mTransform = mTranslation * mRotation * mScaling;
+	prop1.aabbSize.vecMin = vecPropMin;
+	prop1.aabbSize.vecMax = vecPropMax;
+
+	mScaling.SetScale(Vector(1, 2, 3));
+	mRotation.SetRotation(30, Vector(0, 1, 0));
+	mTranslation.SetTranslation(Vector(10, 0, 15));
+
+	prop2.mTransform = mTranslation * mRotation * mScaling;
+	prop2.aabbSize.vecMin = vecPropMin;
+	prop2.aabbSize.vecMax = vecPropMax;
+
+	mScaling.SetScale(Vector(1, 1, 1));
+	mRotation.SetRotation(-30, Vector(0, 1, 0));
+	mTranslation.SetTranslation(Vector(11, 0, 8));
+
+	prop3.mTransform = mTranslation * mRotation * mScaling;
+	prop3.aabbSize.vecMin = vecPropMin;
+	prop3.aabbSize.vecMax = vecPropMax;
+
+	mScaling.SetScale(Vector(2, 2, 2));
+	mRotation.SetRotation(40, Vector(0, 1, 0));
+	mTranslation.SetTranslation(Vector(2, 0, 14));
+
+	prop4.mTransform = mTranslation * mRotation * mScaling;
+	prop4.aabbSize.vecMin = vecPropMin;
+	prop4.aabbSize.vecMax = vecPropMax;
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
