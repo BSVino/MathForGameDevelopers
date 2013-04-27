@@ -132,16 +132,16 @@ public:
 	}
 
 public:
-	Point  vecPosition;
-	Vector vecMovement;
-	Vector vecMovementGoal;
-	Vector vecVelocity;
-	Vector vecGravity;
-	EAngle angView;
-	float  flSpeed;
-	AABB   aabbSize;
+	Matrix4x4 mTransform;
+	Vector    vecMovement;
+	Vector    vecMovementGoal;
+	Vector    vecVelocity;
+	Vector    vecGravity;
+	EAngle    angView;
+	float     flSpeed;
+	AABB      aabbSize;
 
-	float  flShotTime;
+	float     flShotTime;
 };
 
 // This is the player character
@@ -250,8 +250,8 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 {
 	if (iButton == TINKER_KEY_MOUSE_LEFT && iState == TINKER_MOUSE_PRESSED)
 	{
-		Vector v0 = box.vecPosition + Vector(0, 1, 0);
-		Vector v1 = box.vecPosition + Vector(0, 1, 0) + box.angView.ToVector() * 100;
+		Vector v0 = box.mTransform.GetTranslation() + Vector(0, 1, 0);
+		Vector v1 = box.mTransform.GetTranslation() + Vector(0, 1, 0) + box.angView.ToVector() * 100;
 
 		Vector vecIntersection;
 		CCharacter* pHit = nullptr;
@@ -279,21 +279,21 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 	float flTestFraction;
 	pHit = nullptr;
 
-	if (LineAABBIntersection(target1.aabbSize + target1.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(target1.aabbSize + target1.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &target1;
 	}
 
-	if (LineAABBIntersection(target2.aabbSize + target2.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(target2.aabbSize + target2.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &target2;
 	}
 
-	if (LineAABBIntersection(target3.aabbSize + target3.vecPosition, v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(target3.aabbSize + target3.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
 		vecIntersection = vecTestIntersection;
 		flLowestFraction = flTestFraction;
@@ -328,12 +328,12 @@ void CGame::Update(float dt)
 	box.vecVelocity.y = flSaveY;
 
 	// Update position and vecMovement. http://www.youtube.com/watch?v=c4b9lCfSDQM
-	box.vecPosition = box.vecPosition + box.vecVelocity * dt;
+	box.mTransform += box.vecVelocity * dt;
 	box.vecVelocity = box.vecVelocity + box.vecGravity * dt;
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
-	if (box.vecPosition.y < 0)
-		box.vecPosition.y = 0;
+	if (box.mTransform.GetTranslation().y < 0)
+		box.mTransform.v[3].y = 0;
 }
 
 void CGame::Draw()
@@ -347,7 +347,7 @@ void CGame::Draw()
 	CRenderer* pRenderer = GetRenderer();
 
 	// Tell the renderer how to set up the camera.
-	pRenderer->SetCameraPosition(box.vecPosition - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
+	pRenderer->SetCameraPosition(box.mTransform.GetTranslation() - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
 	pRenderer->SetCameraDirection(vecForward);
 	pRenderer->SetCameraUp(Vector(0, 1, 0));
 	pRenderer->SetCameraFOV(90);
@@ -378,8 +378,8 @@ void CGame::Draw()
 		// Render the player-box
 		c.SetUniform("vecColor", Vector4D(0.8f, 0.4f, 0.2f, 1));
 
-		// Sets the position that the player-box will be rendered
-		c.Translate(box.vecPosition);
+		// At the moment this transformation only holds translation. Soon we'll wrap it all up into one matrix.
+		c.Transform(box.mTransform);
 
 		// Create a set of basis vectors that do what we need.
 		Vector vecForward = box.angView.ToVector(); // Euler angles: https://www.youtube.com/watch?v=zZM2uUkEoFw
@@ -406,36 +406,36 @@ void CGame::Draw()
 		c.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
 
 		Vector vecForward, vecRight, vecUp;
-		vecForward = target1.vecPosition - pRenderer->GetCameraPosition();
+		vecForward = target1.mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
 		target1.ShotEffect(&c);
 
-		c.SetPosition(target1.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
+		c.SetPosition(target1.mTransform.GetTranslation() + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.SetUniform("bDiffuse", true);
 		c.RenderBillboard(m_iMonsterTexture, target1.aabbSize.vecMax.x, vecUp, vecRight);
 
 		c.ResetTransformations();
 
-		vecForward = target2.vecPosition - pRenderer->GetCameraPosition();
+		vecForward = target2.mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
 		target2.ShotEffect(&c);
 
-		c.SetPosition(target2.vecPosition + Vector(0, target1.aabbSize.GetHeight()/2, 0));
+		c.SetPosition(target2.mTransform.GetTranslation() + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target2.aabbSize.vecMax.x, vecUp, vecRight);
 
 		c.ResetTransformations();
 
-		vecForward = target3.vecPosition - pRenderer->GetCameraPosition();
+		vecForward = target3.mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
 		target3.ShotEffect(&c);
 
-		c.SetPosition(target3.vecPosition + Vector(0, target3.aabbSize.GetHeight()/2, 0));
+		c.SetPosition(target3.mTransform.GetTranslation() + Vector(0, target3.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target3.aabbSize.vecMax.x, vecUp, vecRight);
 
 		c.SetUniform("bDiffuse", false);
@@ -500,7 +500,7 @@ void CGame::Draw()
 void CGame::GameLoop()
 {
 	// Initialize the box's position etc
-	box.vecPosition = Point(0, 0, 0);
+	box.mTransform.SetTranslation(Point(0, 0, 0));
 	box.vecMovement = Vector(0, 0, 0);
 	box.vecMovementGoal = Vector(0, 0, 0);
 	box.vecVelocity = Vector(0, 0, 0);
@@ -510,11 +510,11 @@ void CGame::GameLoop()
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
-	target1.vecPosition = Point(6, 0, 4);
+	target1.mTransform.SetTranslation(Point(6, 0, 4));
 	target1.aabbSize.vecMin = vecMonsterMin;
 	target1.aabbSize.vecMax = vecMonsterMax;
 
-	target2.vecPosition = Point(3, 0, -2);
+	target2.mTransform.SetTranslation(Point(3, 0, -2));
 	target2.aabbSize.vecMin = vecMonsterMin;
 	target2.aabbSize.vecMax = vecMonsterMax;
 
@@ -528,7 +528,7 @@ void CGame::GameLoop()
 	// http://youtu.be/0QluD4hJp4U
 	Matrix4x4 mBossMatrix(vecXBasis*3, vecYBasis*3, vecZBasis*3);
 
-	target3.vecPosition = Point(-5, 0, 8);
+	target3.mTransform.SetTranslation(Point(-5, 0, 8));
 	target3.aabbSize.vecMin = mBossMatrix*vecMonsterMin;
 	target3.aabbSize.vecMax = mBossMatrix*vecMonsterMax;
 

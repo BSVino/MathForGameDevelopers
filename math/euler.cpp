@@ -27,8 +27,8 @@ Vector EAngle::ToVector() const
 	Vector result;
 
 	// Convert from degrees to radians.
-	float y2 = y/360*2*M_PI;
-	float p2 = p/360*2*M_PI;
+	float y2 = y/360*2*(float)M_PI;
+	float p2 = p/360*2*(float)M_PI;
 
 	result.x = cos(y2)*cos(p2);
 	result.y = sin(p2);
