@@ -110,6 +110,25 @@ public:
 	}
 
 public:
+	void SetTransform(const Vector& vecScaling, float flTheta, const Vector& vecRotationAxis, const Vector& vecTranslation)
+	{
+		// Produce a transformation matrix from our three TRS matrices.
+		// Order matters! http://youtu.be/7pe1xYzFCvA
+		Matrix4x4 mScaling, mRotation, mTranslation;
+		mScaling.SetScale(vecScaling);
+		mRotation.SetRotation(flTheta, vecRotationAxis);
+		mTranslation.SetTranslation(vecTranslation);
+		mTransform = mTranslation * mRotation * mScaling;
+
+		// Produce an inverse transformation matrix from three inverse TRS matrices.
+		// Order still matters! http://youtu.be/onSyW44OnxA
+		Matrix4x4 mScalingInverse, mRotationInverse, mTranslationInverse;
+		mScalingInverse.SetScale(1/vecScaling);
+		mRotationInverse = mRotation.Transposed();
+		mTranslationInverse.SetTranslation(-vecTranslation);
+		mTransformInverse = mScalingInverse * mRotationInverse * mTranslationInverse;
+	}
+
 	void ShotEffect(CRenderingContext* c)
 	{
 		// flShotTime gets set to the time when the character was last shot.
@@ -133,6 +152,7 @@ public:
 
 public:
 	Matrix4x4 mTransform;
+	Matrix4x4 mTransformInverse;
 	Vector    vecMovement;
 	Vector    vecMovementGoal;
 	Vector    vecVelocity;
@@ -284,51 +304,56 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 	float flTestFraction;
 	pHit = nullptr;
 
-	if (LineAABBIntersection(target1.aabbSize + target1.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	// The v0 and v1 are in the global coordinate system and we need to transform it to the target's
+	// local coordinate system to use axis-aligned intersection. We do so using the inverse transform matrix.
+	// http://youtu.be/-Fn4atv2NsQ
+	if (LineAABBIntersection(target1.aabbSize, target1.mTransformInverse*v0, target1.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		// Once we have the result we can use the regular transform matrix to get it back in
+		// global coordinates. http://youtu.be/-Fn4atv2NsQ
+		vecIntersection = target1.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &target1;
 	}
 
-	if (LineAABBIntersection(target2.aabbSize + target2.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(target2.aabbSize, target2.mTransformInverse*v0, target2.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = target2.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &target2;
 	}
 
-	if (LineAABBIntersection(target3.aabbSize + target3.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(target3.aabbSize, target3.mTransformInverse*v0, target3.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = target3.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &target3;
 	}
 
-	if (LineAABBIntersection(prop1.aabbSize + prop1.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(prop1.aabbSize, prop1.mTransformInverse*v0, prop1.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = prop1.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &prop1;
 	}
 
-	if (LineAABBIntersection(prop2.aabbSize + prop2.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(prop2.aabbSize, prop2.mTransformInverse*v0, prop2.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = prop2.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &prop2;
 	}
 
-	if (LineAABBIntersection(prop3.aabbSize + prop3.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(prop3.aabbSize, prop3.mTransformInverse*v0, prop3.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = prop3.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &prop3;
 	}
 
-	if (LineAABBIntersection(prop4.aabbSize + prop4.mTransform.GetTranslation(), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	if (LineAABBIntersection(prop4.aabbSize, prop4.mTransformInverse*v0, prop4.mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 	{
-		vecIntersection = vecTestIntersection;
+		vecIntersection = prop4.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &prop4;
 	}
@@ -454,32 +479,28 @@ void CGame::Draw()
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
+		c.LoadTransform(target1.mTransform);
+		c.Translate(Vector(0, target1.aabbSize.GetHeight()/2, 0)); // Move the monster up so his feet don't stick in the ground.
 		target1.ShotEffect(&c);
-
-		c.SetPosition(target1.mTransform.GetTranslation() + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.SetUniform("bDiffuse", true);
 		c.RenderBillboard(m_iMonsterTexture, target1.aabbSize.vecMax.x, vecUp, vecRight);
-
-		c.ResetTransformations();
 
 		vecForward = target2.mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
+		c.LoadTransform(target2.mTransform);
+		c.Translate(Vector(0, target2.aabbSize.GetHeight()/2, 0)); // Move the monster up so his feet don't stick in the ground.
 		target2.ShotEffect(&c);
-
-		c.SetPosition(target2.mTransform.GetTranslation() + Vector(0, target1.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target2.aabbSize.vecMax.x, vecUp, vecRight);
-
-		c.ResetTransformations();
 
 		vecForward = target3.mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 		vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 		vecUp = vecForward.Cross(-vecRight).Normalized();
 
+		c.LoadTransform(target3.mTransform);
+		c.Translate(Vector(0, target3.aabbSize.GetHeight()/2, 0)); // Move the monster up so his feet don't stick in the ground.
 		target3.ShotEffect(&c);
-
-		c.SetPosition(target3.mTransform.GetTranslation() + Vector(0, target3.aabbSize.GetHeight()/2, 0));
 		c.RenderBillboard(m_iMonsterTexture, target3.aabbSize.vecMax.x, vecUp, vecRight);
 
 		c.SetUniform("bDiffuse", false);
@@ -575,66 +596,34 @@ void CGame::GameLoop()
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
-	target1.mTransform.SetTranslation(Point(6, 0, 4));
+	target1.SetTransform(Vector(1, 1, 1),00, Vector(0, 1, 0), Vector(6, 0, 4));
 	target1.aabbSize.vecMin = vecMonsterMin;
 	target1.aabbSize.vecMax = vecMonsterMax;
 
-	target2.mTransform.SetTranslation(Point(3, 0, -2));
+	target2.SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(3, 0, -2));
 	target2.aabbSize.vecMin = vecMonsterMin;
 	target2.aabbSize.vecMax = vecMonsterMax;
 
-	Vector vecXBasis(1, 0, 0);
-	Vector vecYBasis(0, 1, 0);
-	Vector vecZBasis(0, 0, 1);
-
-	// Make a matrix that can scale the third target so that he's end boss size.
-	// Take each of the coordinate vectors above and scale it by 9. Then the
-	// resulting matrix will scale vectors by a factor of three in each dimension!
-	// http://youtu.be/0QluD4hJp4U
-	Matrix4x4 mBossMatrix(vecXBasis*3, vecYBasis*3, vecZBasis*3);
-
-	target3.mTransform.SetTranslation(Point(-5, 0, 8));
-	target3.aabbSize.vecMin = mBossMatrix*vecMonsterMin;
-	target3.aabbSize.vecMax = mBossMatrix*vecMonsterMax;
+	target3.SetTransform(Vector(3, 3, 3), 0, Vector(0, 1, 0), Vector(-5, 0, 8));
+	target3.aabbSize.vecMin = vecMonsterMin;
+	target3.aabbSize.vecMax = vecMonsterMax;
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);
 
-	Matrix4x4 mScaling;
-	Matrix4x4 mRotation;
-	Matrix4x4 mTranslation;
-
-	mScaling.SetScale(Vector(2, 1, 4));
-	mRotation.SetRotation(30, Vector(0, 1, 0));
-	mTranslation.SetTranslation(Vector(18, 0, 10));
-
-	// Produce a transformation matrix from our three TRS matrices.
-	// Order matters! http://youtu.be/7pe1xYzFCvA
-	prop1.mTransform = mTranslation * mRotation * mScaling;
+	prop1.SetTransform(Vector(2, 1, 4), 20, Vector(0, 1, 0), Vector(18, 0, 10));
 	prop1.aabbSize.vecMin = vecPropMin;
 	prop1.aabbSize.vecMax = vecPropMax;
 
-	mScaling.SetScale(Vector(1, 2, 3));
-	mRotation.SetRotation(30, Vector(0, 1, 0));
-	mTranslation.SetTranslation(Vector(10, 0, 15));
-
-	prop2.mTransform = mTranslation * mRotation * mScaling;
+	prop2.SetTransform(Vector(1, 2, 3), 30, Vector(0, 1, 0), Vector(10, 0, 15));
 	prop2.aabbSize.vecMin = vecPropMin;
 	prop2.aabbSize.vecMax = vecPropMax;
 
-	mScaling.SetScale(Vector(1, 1, 1));
-	mRotation.SetRotation(-30, Vector(0, 1, 0));
-	mTranslation.SetTranslation(Vector(11, 0, 8));
-
-	prop3.mTransform = mTranslation * mRotation * mScaling;
+	prop3.SetTransform(Vector(1, 1, 1), -30, Vector(0, 1, 0), Vector(11, 0, 8));
 	prop3.aabbSize.vecMin = vecPropMin;
 	prop3.aabbSize.vecMax = vecPropMax;
 
-	mScaling.SetScale(Vector(2, 2, 2));
-	mRotation.SetRotation(40, Vector(0, 1, 0));
-	mTranslation.SetTranslation(Vector(2, 0, 14));
-
-	prop4.mTransform = mTranslation * mRotation * mScaling;
+	prop4.SetTransform(Vector(2, 2, 2), 40, Vector(0, 1, 0), Vector(-2, 0, 14));
 	prop4.aabbSize.vecMin = vecPropMin;
 	prop4.aabbSize.vecMax = vecPropMax;
 
