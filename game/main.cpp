@@ -284,7 +284,9 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 		{
 			MakePuff(vecIntersection);
 			MakeBulletTracer(v0, vecIntersection);
-			pHit->flShotTime = Game()->GetTime();
+
+			if (pHit)
+				pHit->flShotTime = Game()->GetTime();
 		}
 		else
 			MakeBulletTracer(v0, v1);
@@ -356,6 +358,14 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		vecIntersection = prop4.mTransform*vecTestIntersection;
 		flLowestFraction = flTestFraction;
 		pHit = &prop4;
+	}
+
+	// Line-Plane Intersection algorithm: http://youtu.be/fIu_8b2n8ZM
+	if (LinePlaneIntersection(Vector(0, 1, 0), Vector(0, 0, 0), v0, v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+	{
+		vecIntersection = vecTestIntersection;
+		flLowestFraction = flTestFraction;
+		pHit = nullptr;
 	}
 
 	if (flLowestFraction < 1)

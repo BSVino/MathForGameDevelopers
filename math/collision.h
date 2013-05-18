@@ -21,3 +21,9 @@ class Vector;
 class AABB;
 
 bool LineAABBIntersection(const AABB& aabbBox, const Vector& v0, const Vector& v1, Vector& vecIntersection, float& flFraction);
+
+// n - plane normal
+// c - any point in the plane
+// x0 - the beginning of our line
+// x1 - the end of our line
+bool LinePlaneIntersection(const Vector& n, const Vector& c, const Vector& x0, const Vector& x1, Vector& vecIntersection, float& flFraction);

@@ -55,6 +55,11 @@ public:
 	};
 };
 
+inline const Vector operator*(float s, const Vector& v)
+{
+	return Vector(s*v.x, s*v.y, s*v.z);
+}
+
 inline const Vector operator/(float s, const Vector& v)
 {
 	return Vector(s/v.x, s/v.y, s/v.z);
