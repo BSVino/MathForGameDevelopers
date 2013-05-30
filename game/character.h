@@ -17,20 +17,36 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "game.h"
 
-int main(int argc, char* argv[])
+#include <vector>
+
+#include <vector.h>
+#include <matrix.h>
+#include <euler.h>
+#include <aabb.h>
+
+using std::vector;
+
+// This class holds information for a single character - eg the position and velocity of the player
+class CCharacter
 {
-	// Create a game
-	CGame game(argc, argv);
+public:
+	CCharacter();
 
-	// Open the game's window
-	game.OpenWindow(640, 480, false, false);
-	game.SetMouseCursorEnabled(false);
+public:
+	void SetTransform(const Vector& vecScaling, float flTheta, const Vector& vecRotationAxis, const Vector& vecTranslation);
+	void ShotEffect(class CRenderingContext* c);
 
-	game.Load();
+public:
+	Matrix4x4 mTransform;
+	Matrix4x4 mTransformInverse;
+	Vector    vecMovement;
+	Vector    vecMovementGoal;
+	Vector    vecVelocity;
+	Vector    vecGravity;
+	EAngle    angView;
+	float     flSpeed;
+	AABB      aabbSize;
 
-	// Run the game loop!
-	game.GameLoop();
-
-	return 0;
-}
+	float     flShotTime;
+};
 

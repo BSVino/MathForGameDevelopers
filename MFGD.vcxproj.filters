@@ -78,10 +78,24 @@
     <ClCompile Include="math\collision.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="game\game.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="game\character.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib">
       <Filter>Libraries</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="game\game.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="game\character.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
