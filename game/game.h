@@ -81,6 +81,8 @@ public:
 	void        RemoveCharacter(CCharacter* pCharacter);
 	CCharacter* GetCharacterIndex(size_t i);
 
+	size_t      GetMonsterTexture() { return m_iMonsterTexture; }
+
 private:
 	int m_iLastMouseX;
 	int m_iLastMouseY;

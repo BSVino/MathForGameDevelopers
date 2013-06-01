@@ -34,12 +34,18 @@ public:
 
 public:
 	void SetTransform(const Vector& vecScaling, float flTheta, const Vector& vecRotationAxis, const Vector& vecTranslation);
+	void SetTranslation(const Vector& vecTranslation);
 	void ShotEffect(class CRenderingContext* c);
+
+	void TakeDamage(int iDamage);
 
 public:
 	int       m_iIndex;
 	int       m_iParity;
 
+	Vector    m_vecScaling;
+	Vector    m_vecRotationAxis;
+	float     m_flRotationTheta;
 	Matrix4x4 m_mTransform;
 	Matrix4x4 m_mTransformInverse;
 	Vector    m_vecMovement;
@@ -52,6 +58,9 @@ public:
 	Color     m_clrRender;
 	size_t    m_iBillboardTexture;
 	bool      m_bHitByTraces;
+	bool      m_bEnemyAI;
+	bool      m_bTakesDamage;
+	int       m_iHealth;
 
 	float     m_flShotTime;
 };

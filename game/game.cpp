@@ -30,7 +30,7 @@ CGame::CGame(int argc, char** argv)
 {
 	m_hPlayer = nullptr;
 
-	m_iLastMouseX = m_iLastMouseY = 0;
+	m_iLastMouseX = m_iLastMouseY = -1;
 
 	memset(m_apEntityList, 0, sizeof(m_apEntityList));
 }
@@ -115,11 +115,17 @@ void CGame::KeyRelease(int c)
 // This method is called every time the player moves the mouse
 void CGame::MouseMotion(int x, int y)
 {
-	if (!m_hPlayer)
-		return;
+	if (m_iLastMouseX == -1 && m_iLastMouseY == -1)
+	{
+		m_iLastMouseX = x;
+		m_iLastMouseY = y;
+	}
 
 	int iMouseMovedX = x - m_iLastMouseX;
 	int iMouseMovedY = m_iLastMouseY - y; // The data comes in backwards. negative y means the mouse moved up.
+
+	if (!m_hPlayer)
+		return;
 
 	float flSensitivity = 0.3f;
 
@@ -147,7 +153,10 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 			MakeBulletTracer(v0, vecIntersection);
 
 			if (pHit)
+			{
 				pHit->m_flShotTime = Game()->GetTime();
+				pHit->TakeDamage(1);
+			}
 		}
 		else
 			MakeBulletTracer(v0, v1);
@@ -226,12 +235,13 @@ void CGame::Update(float dt)
 	m_hPlayer->m_vecVelocity.y = flSaveY;
 
 	// Update position and vecMovement. http://www.youtube.com/watch?v=c4b9lCfSDQM
-	m_hPlayer->m_mTransform += m_hPlayer->m_vecVelocity * dt;
+	m_hPlayer->SetTranslation(m_hPlayer->m_mTransform.GetTranslation() + m_hPlayer->m_vecVelocity * dt);
 	m_hPlayer->m_vecVelocity = m_hPlayer->m_vecVelocity + m_hPlayer->m_vecGravity * dt;
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
-	if (m_hPlayer->m_mTransform.GetTranslation().y < 0)
-		m_hPlayer->m_mTransform.v[3].y = 0;
+	Vector vecTranslation = m_hPlayer->m_mTransform.GetTranslation();
+	if (vecTranslation.y < 0)
+		m_hPlayer->SetTranslation(Vector(vecTranslation.x, 0, vecTranslation.z));
 
 	// Grab the player's translation and make a translation only matrix. http://www.youtube.com/watch?v=iCazI3nKBf0
 	Vector vecPosition = m_hPlayer->m_mTransform.GetTranslation();
@@ -254,6 +264,23 @@ void CGame::Update(float dt)
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
 	m_hPlayer->m_mTransform = mPlayerTranslation * mPlayerRotation * mPlayerScaling;
+	m_hPlayer->m_mTransformInverse = m_hPlayer->m_mTransform.InvertedRT();
+
+	float flMonsterSpeed = 0.5f;
+	for (size_t i = 0; i < MAX_CHARACTERS; i++)
+	{
+		CCharacter* pCharacter = GetCharacterIndex(i);
+		if (!pCharacter)
+			continue;
+
+		if (!pCharacter->m_bEnemyAI)
+			continue;
+
+		// Update position and movement. http://www.youtube.com/watch?v=c4b9lCfSDQM
+		pCharacter->m_vecVelocity = (m_hPlayer->m_mTransform.GetTranslation() - pCharacter->m_mTransform.GetTranslation()).Normalized() * flMonsterSpeed;
+
+		pCharacter->SetTranslation(pCharacter->m_mTransform.GetTranslation() + pCharacter->m_vecVelocity * dt);
+	}
 }
 
 void CGame::Draw()
@@ -403,27 +430,34 @@ void CGame::GameLoop()
 	m_hPlayer->m_clrRender = Color(0.8f, 0.4f, 0.2f, 1.0f);
 	m_hPlayer->m_bHitByTraces = false;
 	m_hPlayer->m_aabbSize = AABB(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
+	m_hPlayer->m_bTakesDamage = true;
 
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
 	CCharacter* pTarget1 = CreateCharacter();
-	pTarget1->SetTransform(Vector(1, 1, 1),00, Vector(0, 1, 0), Vector(6, 0, 4));
+	pTarget1->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(6, 0, 4));
 	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget1->m_aabbSize.vecMax = vecMonsterMax;
 	pTarget1->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget1->m_bEnemyAI = true;
+	pTarget1->m_bTakesDamage = true;
 
 	CCharacter* pTarget2 = CreateCharacter();
 	pTarget2->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(3, 0, -2));
 	pTarget2->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget2->m_aabbSize.vecMax = vecMonsterMax;
 	pTarget2->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget2->m_bEnemyAI = true;
+	pTarget2->m_bTakesDamage = true;
 
 	CCharacter* pTarget3 = CreateCharacter();
 	pTarget3->SetTransform(Vector(3, 3, 3), 0, Vector(0, 1, 0), Vector(-5, 0, 8));
 	pTarget3->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget3->m_aabbSize.vecMax = vecMonsterMax;
 	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget3->m_bEnemyAI = true;
+	pTarget3->m_bTakesDamage = true;
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);
@@ -507,7 +541,7 @@ void CGame::RemoveCharacter(CCharacter* pCharacter)
 	// Find a spot in my entity list that's empty.
 	for (size_t i = 0; i < MAX_CHARACTERS; i++)
 	{
-		if (m_apEntityList[iSpot] == pCharacter)
+		if (m_apEntityList[i] == pCharacter)
 		{
 			iSpot = i;
 			break;
