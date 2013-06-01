@@ -37,16 +37,22 @@ public:
 	void ShotEffect(class CRenderingContext* c);
 
 public:
-	Matrix4x4 mTransform;
-	Matrix4x4 mTransformInverse;
-	Vector    vecMovement;
-	Vector    vecMovementGoal;
-	Vector    vecVelocity;
-	Vector    vecGravity;
-	EAngle    angView;
-	float     flSpeed;
-	AABB      aabbSize;
+	int       m_iIndex;
+	int       m_iParity;
 
-	float     flShotTime;
+	Matrix4x4 m_mTransform;
+	Matrix4x4 m_mTransformInverse;
+	Vector    m_vecMovement;
+	Vector    m_vecMovementGoal;
+	Vector    m_vecVelocity;
+	Vector    m_vecGravity;
+	EAngle    m_angView;
+	float     m_flSpeed;
+	AABB      m_aabbSize;
+	Color     m_clrRender;
+	size_t    m_iBillboardTexture;
+	bool      m_bHitByTraces;
+
+	float     m_flShotTime;
 };
 

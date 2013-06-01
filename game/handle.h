@@ -17,35 +17,24 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #pragma once
 
-#include "vector.h"
+class CCharacter;
 
-class AABB
+class CHandle
 {
 public:
-	AABB()
+	CHandle()
 	{
-	}
-
-	AABB(const Vector& min, const Vector& max)
-	{
-		vecMin = min;
-		vecMax = max;
-	}
-
-	AABB operator+(const Point& p) const
-	{
-		AABB result = (*this);
-		result.vecMin = p + vecMin;
-		result.vecMax = p + vecMax;
-		return result;
-	}
-
-	float GetHeight() const
-	{
-		return vecMax.y-vecMin.y;
+		m_iIndex = ~0;
 	}
 
 public:
-	Vector vecMin;
-	Vector vecMax;
+	void operator=(const CCharacter* pCharacter);
+
+	CCharacter* Get() const;
+	CCharacter* operator->() const;
+	bool operator!() const;
+
+public:
+	size_t m_iIndex;
+	size_t m_iParity;
 };

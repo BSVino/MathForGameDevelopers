@@ -72,6 +72,7 @@
     <ClCompile Include="datamanager\dataserializer.cpp" />
     <ClCompile Include="game\character.cpp" />
     <ClCompile Include="game\game.cpp" />
+    <ClCompile Include="game\handle.cpp" />
     <ClCompile Include="game\main.cpp" />
     <ClCompile Include="math\collision.cpp" />
     <ClCompile Include="math\color.cpp" />
@@ -91,6 +92,7 @@
   <ItemGroup>
     <ClInclude Include="game\character.h" />
     <ClInclude Include="game\game.h" />
+    <ClInclude Include="game\handle.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

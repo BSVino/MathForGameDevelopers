@@ -15,37 +15,42 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
+#include "handle.h"
 
-#include "vector.h"
+#include "game.h"
+#include "character.h"
 
-class AABB
+void CHandle::operator=(const CCharacter* pCharacter)
 {
-public:
-	AABB()
+	if (!pCharacter)
 	{
+		m_iIndex = ~0;
+		return;
 	}
 
-	AABB(const Vector& min, const Vector& max)
-	{
-		vecMin = min;
-		vecMax = max;
-	}
+	m_iParity = pCharacter->m_iParity;
+	m_iIndex = pCharacter->m_iIndex;
+}
 
-	AABB operator+(const Point& p) const
-	{
-		AABB result = (*this);
-		result.vecMin = p + vecMin;
-		result.vecMax = p + vecMax;
-		return result;
-	}
+CCharacter* CHandle::Get() const
+{
+	if (m_iIndex == ~0)
+		return nullptr;
 
-	float GetHeight() const
-	{
-		return vecMax.y-vecMin.y;
-	}
+	CCharacter* pCharacter = Game()->GetCharacterIndex(m_iIndex);
 
-public:
-	Vector vecMin;
-	Vector vecMax;
-};
+	if (pCharacter->m_iParity != m_iParity)
+		return nullptr;
+
+	return pCharacter;
+}
+
+CCharacter* CHandle::operator->() const
+{
+	return Get();
+}
+
+bool CHandle::operator!() const
+{
+	return !Get();
+}

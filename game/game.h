@@ -23,7 +23,11 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <renderer/application.h>
 
+#include "handle.h"
+
 using std::vector;
+
+#define MAX_CHARACTERS 1000
 
 // CGame is the "application" class. It creates the window and handles user input.
 // It extends CApplication, which does all of the dirty work. All we have to do
@@ -51,11 +55,7 @@ class CGame : public CApplication
 	};
 
 public:
-	CGame(int argc, char** argv)
-		: CApplication(argc, argv)
-	{
-		m_iLastMouseX = m_iLastMouseY = 0;
-	}
+	CGame(int argc, char** argv);
 
 public:
 	void Load();
@@ -77,6 +77,10 @@ public:
 	void Draw();
 	void GameLoop();
 
+	CCharacter* CreateCharacter();
+	void        RemoveCharacter(CCharacter* pCharacter);
+	CCharacter* GetCharacterIndex(size_t i);
+
 private:
 	int m_iLastMouseX;
 	int m_iLastMouseY;
@@ -85,6 +89,11 @@ private:
 	vector<CBulletTracer> m_aTracers;
 
 	size_t m_iMonsterTexture;
+
+	CCharacter* m_apEntityList[MAX_CHARACTERS];
+
+	// This is the player character
+	CHandle m_hPlayer;
 };
 
 inline CGame* Game()

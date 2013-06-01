@@ -84,6 +84,9 @@
     <ClCompile Include="game\character.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
+    <ClCompile Include="game\handle.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib">
@@ -95,6 +98,9 @@
       <Filter>Source Files\game</Filter>
     </ClInclude>
     <ClInclude Include="game\character.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="game\handle.h">
       <Filter>Source Files\game</Filter>
     </ClInclude>
   </ItemGroup>

@@ -21,7 +21,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 CCharacter::CCharacter()
 {
-	flShotTime = -1;
+	m_flShotTime = -1;
+	m_bHitByTraces = true;
+	m_clrRender = Color(255, 255, 255, 255);
+	m_iBillboardTexture = 0;
 }
 
 void CCharacter::SetTransform(const Vector& vecScaling, float flTheta, const Vector& vecRotationAxis, const Vector& vecTranslation)
@@ -32,7 +35,7 @@ void CCharacter::SetTransform(const Vector& vecScaling, float flTheta, const Vec
 	mScaling.SetScale(vecScaling);
 	mRotation.SetRotation(flTheta, vecRotationAxis);
 	mTranslation.SetTranslation(vecTranslation);
-	mTransform = mTranslation * mRotation * mScaling;
+	m_mTransform = mTranslation * mRotation * mScaling;
 
 	// Produce an inverse transformation matrix from three inverse TRS matrices.
 	// Order still matters! http://youtu.be/onSyW44OnxA
@@ -40,7 +43,7 @@ void CCharacter::SetTransform(const Vector& vecScaling, float flTheta, const Vec
 	mScalingInverse.SetScale(1/vecScaling);
 	mRotationInverse = mRotation.Transposed();
 	mTranslationInverse.SetTranslation(-vecTranslation);
-	mTransformInverse = mScalingInverse * mRotationInverse * mTranslationInverse;
+	m_mTransformInverse = mScalingInverse * mRotationInverse * mTranslationInverse;
 }
 
 void CCharacter::ShotEffect(CRenderingContext* c)
@@ -48,8 +51,8 @@ void CCharacter::ShotEffect(CRenderingContext* c)
 	// flShotTime gets set to the time when the character was last shot.
 	// So, when the character is shot, it will ramp up from 0 to 2pi, or 360 degrees.
 	// (We need to use radians because our system sin/cos functions use radians.)
-	float flTime = (Game()->GetTime() - flShotTime) * 10;
-	if (flShotTime < 0 || flTime > 2*M_PI)
+	float flTime = (Game()->GetTime() - m_flShotTime) * 10;
+	if (m_flShotTime < 0 || flTime > 2*M_PI)
 		return;
 
 	// Create three rotated basis vectors. The X and Z vectors spin around in a circle,
