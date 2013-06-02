@@ -182,6 +182,7 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		if (!pCharacter)
 			continue;
 
+		// Only monsters and boxes get hit by traces. The player doesn't, he's immune to his own attacks.
 		if (!pCharacter->m_bHitByTraces)
 			continue;
 
@@ -319,6 +320,7 @@ void CGame::Draw()
 	// Set the sunlight direction. The y component is -1 so the light is pointing down.
 	r.SetUniform("vecSunlight", Vector(-1, -1, 0.5f).Normalized());
 
+	// Loop through all characters, render them one at a time.
 	for (size_t i = 0; i < MAX_CHARACTERS; i++)
 	{
 		CCharacter* pCharacter = GetCharacterIndex(i);
@@ -335,6 +337,7 @@ void CGame::Draw()
 			c.SetBackCulling(false);
 			c.SetUniform("bDiffuse", true);
 
+			// Create a billboard by creating basis vectors. https://www.youtube.com/watch?v=puOTwCrEm7Q
 			Vector vecForward, vecRight, vecUp;
 			vecForward = pCharacter->m_mTransform.GetTranslation() - pRenderer->GetCameraPosition();
 			vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
@@ -507,6 +510,8 @@ void CGame::GameLoop()
 	}
 }
 
+// Create a character and add him into our entity list.
+// Entity list explained here: http://youtu.be/V6vq0PRFKgk
 CCharacter* CGame::CreateCharacter()
 {
 	size_t iSpot = ~0;
@@ -534,6 +539,7 @@ CCharacter* CGame::CreateCharacter()
 	return m_apEntityList[iSpot];
 }
 
+// Remove a character from the entity list.
 void CGame::RemoveCharacter(CCharacter* pCharacter)
 {
 	size_t iSpot = ~0;

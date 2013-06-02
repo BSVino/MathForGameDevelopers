@@ -89,7 +89,7 @@ void CCharacter::TakeDamage(int iDamage)
 	{
 		if (m_bTakesDamage)
 		{
-			// Spawn another.
+			// Spawn another baddy to take this guy's place.
 			CCharacter* pNew = Game()->CreateCharacter();
 
 			// Position the new monster in a random spot near the player.
@@ -102,6 +102,7 @@ void CCharacter::TakeDamage(int iDamage)
 			pNew->m_bTakesDamage = true;
 		}
 
+		// We're at zero health, time to die.
 		Game()->RemoveCharacter(this);
 	}
 }

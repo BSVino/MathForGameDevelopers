@@ -32,12 +32,16 @@ void CHandle::operator=(const CCharacter* pCharacter)
 	m_iIndex = pCharacter->m_iIndex;
 }
 
+// Resolve a handle into a character pointer.
+// http://youtu.be/V6vq0PRFKgk
 CCharacter* CHandle::Get() const
 {
 	if (m_iIndex == ~0)
 		return nullptr;
 
 	CCharacter* pCharacter = Game()->GetCharacterIndex(m_iIndex);
+	if (!pCharacter)
+		return nullptr;
 
 	if (pCharacter->m_iParity != m_iParity)
 		return nullptr;
