@@ -18,6 +18,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "game.h"
 
 #include <math/collision.h>
+#include <math/frustum.h>
 #include <maths.h>
 
 #include <renderer/renderer.h>
@@ -115,6 +116,15 @@ void CGame::KeyRelease(int c)
 // This method is called every time the player moves the mouse
 void CGame::MouseMotion(int x, int y)
 {
+	if (!HasFocus())
+	{
+		// Swallow the input while the window isn't in focus so the player
+		// isn't facing off in a strange direction when they tab back in.
+		m_iLastMouseX = x;
+		m_iLastMouseY = y;
+		return;
+	}
+
 	if (m_iLastMouseX == -1 && m_iLastMouseY == -1)
 	{
 		m_iLastMouseX = x;
@@ -314,6 +324,8 @@ void CGame::Draw()
 	// camera information that we passed it before.
 	pRenderer->StartRendering(&r);
 
+	CFrustum FrameFrustum(r.GetProjection() * r.GetView());
+
 	// First tell OpenGL what "shader" or "program" to use.
 	r.UseProgram("model");
 
@@ -327,9 +339,19 @@ void CGame::Draw()
 		if (!pCharacter)
 			continue;
 
+		// We need to scale the AABB using the character's scale values before we can use it to calculate our center/radius.
+		AABB aabbSizeWithScaling = pCharacter->m_aabbSize * pCharacter->m_vecScaling;
+		Vector vecCharacterCenter = pCharacter->m_mTransform.GetTranslation() + aabbSizeWithScaling.GetCenter();
+		float flCharacterRadius = aabbSizeWithScaling.GetRadius();
+
+		// If the entity is outside the viewing frustum then the player can't see it - don't draw it.
+		// http://youtu.be/4p-E_31XOPM
+		if (!FrameFrustum.SphereIntersection(vecCharacterCenter, flCharacterRadius))
+			continue;
+
 		CRenderingContext c(pRenderer, true);
 
-		// Render the player-box
+		// Set the color of the box to be rendered.
 		c.SetUniform("vecColor", pCharacter->m_clrRender);
 
 		if (pCharacter->m_iBillboardTexture)

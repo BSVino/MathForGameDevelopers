@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Lunar Workshop, Inc.
+Copyright (c) 2013, Lunar Workshop, Inc.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -19,60 +19,27 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "vector.h"
 
-class AABB
+// Plane class defined by a normal vector which should aways be unit length and a "distance" to the origin.
+// Also can be thought of as ax + by + cz + d = 0, the equation of a plane in 3D space, where a b and c are the x, y, z of the normal n.
+class CPlane
 {
 public:
-	AABB()
+	void Normalize()
 	{
-	}
+		// It helps a ton if our planes are normalized, meaning n is unit length.
+		// To normalize the plane, we do this operation:
+		// s(ax + by + cz + d) = s(0)
+		// We calculate s by using 1/|n|, and it gets us the number we must scale n by to make it unit length.
+		// Notice how d needs to be scaled also.
 
-	AABB(const Vector& min, const Vector& max)
-	{
-		vecMin = min;
-		vecMax = max;
-	}
-
-	const AABB operator*(const Vector& s) const
-	{
-		AABB result = (*this);
-
-		result.vecMin.x *= s.x;
-		result.vecMin.y *= s.y;
-		result.vecMin.z *= s.z;
-
-		result.vecMax.x *= s.x;
-		result.vecMax.y *= s.y;
-		result.vecMax.z *= s.z;
-
-		return result;
-	}
-
-	AABB operator+(const Point& p) const
-	{
-		AABB result = (*this);
-		result.vecMin = p + vecMin;
-		result.vecMax = p + vecMax;
-		return result;
-	}
-
-	float GetHeight() const
-	{
-		return vecMax.y-vecMin.y;
-	}
-
-	// What is the center of the smallest sphere that will enclose this AABB?
-	Vector GetCenter() const
-	{
-		return (vecMax+vecMin)/2;
-	}
-
-	// What is the radius of the smallest sphere that will enclose this AABB?
-	float GetRadius() const
-	{
-		return ((vecMax-vecMin)/2).Length();
+		float flScale = 1/n.Length();
+		n.x *= flScale;
+		n.y *= flScale;
+		n.z *= flScale;
+		d *= flScale;
 	}
 
 public:
-	Vector vecMin;
-	Vector vecMax;
+	Vector n; // The normal
+	float d;  // The "distance" to the origin.
 };

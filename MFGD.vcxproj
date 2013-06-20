@@ -77,6 +77,7 @@
     <ClCompile Include="math\collision.cpp" />
     <ClCompile Include="math\color.cpp" />
     <ClCompile Include="math\euler.cpp" />
+    <ClCompile Include="math\frustum.cpp" />
     <ClCompile Include="math\matrix.cpp" />
     <ClCompile Include="math\vector.cpp" />
     <ClCompile Include="renderer\application.cpp" />

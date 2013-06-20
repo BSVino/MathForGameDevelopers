@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Lunar Workshop, Inc.
+Copyright (c) 2013, Lunar Workshop, Inc.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -17,62 +17,26 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #pragma once
 
-#include "vector.h"
+#include "plane.h"
 
-class AABB
+class Matrix4x4;
+
+#define FRUSTUM_NEAR  0
+#define FRUSTUM_FAR   1
+#define FRUSTUM_LEFT  2
+#define FRUSTUM_RIGHT 3
+#define FRUSTUM_UP    4
+#define FRUSTUM_DOWN  5
+
+// Frustum class defined by six planes enclosing the frustum. The normals face inward.
+class CFrustum
 {
 public:
-	AABB()
-	{
-	}
-
-	AABB(const Vector& min, const Vector& max)
-	{
-		vecMin = min;
-		vecMax = max;
-	}
-
-	const AABB operator*(const Vector& s) const
-	{
-		AABB result = (*this);
-
-		result.vecMin.x *= s.x;
-		result.vecMin.y *= s.y;
-		result.vecMin.z *= s.z;
-
-		result.vecMax.x *= s.x;
-		result.vecMax.y *= s.y;
-		result.vecMax.z *= s.z;
-
-		return result;
-	}
-
-	AABB operator+(const Point& p) const
-	{
-		AABB result = (*this);
-		result.vecMin = p + vecMin;
-		result.vecMax = p + vecMax;
-		return result;
-	}
-
-	float GetHeight() const
-	{
-		return vecMax.y-vecMin.y;
-	}
-
-	// What is the center of the smallest sphere that will enclose this AABB?
-	Vector GetCenter() const
-	{
-		return (vecMax+vecMin)/2;
-	}
-
-	// What is the radius of the smallest sphere that will enclose this AABB?
-	float GetRadius() const
-	{
-		return ((vecMax-vecMin)/2).Length();
-	}
+	CFrustum(const Matrix4x4& m);
 
 public:
-	Vector vecMin;
-	Vector vecMax;
+	bool SphereIntersection(const Vector& vecCenter, float flRadius);
+
+public:
+	CPlane p[6];
 };

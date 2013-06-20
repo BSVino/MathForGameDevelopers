@@ -220,8 +220,8 @@ void Matrix4x4::SetRotation(float flAngle, const Vector& v)
 	float y = v.y;
 	float z = v.z;
 
-	float c = cos(flAngle*M_PI/180);
-	float s = sin(flAngle*M_PI/180);
+	float c = cos(flAngle*(float)M_PI/180);
+	float s = sin(flAngle*(float)M_PI/180);
 	float t = 1-c;
 
 	m[0][0] = x*x*t + c;
@@ -259,7 +259,7 @@ void Matrix4x4::SetReflection(const Vector& vecPlane)
 
 Matrix4x4 Matrix4x4::ProjectPerspective(float flFOV, float flAspectRatio, float flNear, float flFar)
 {
-	float flRight = flNear * tan(flFOV * M_PI / 360);
+	float flRight = flNear * tan(flFOV * (float)M_PI / 360);
 	float flLeft = -flRight;
 
 	float flBottom = flLeft / flAspectRatio;
