@@ -34,7 +34,6 @@ void main()
 
 	// Use that as our output color
 	vecOutputColor = vecDiffuse;
-	vecOutputColor.a *= flAlpha;
 
 	if (vecDiffuse.a < 0.01)
 		discard;

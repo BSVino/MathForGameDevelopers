@@ -29,6 +29,7 @@ CCharacter::CCharacter()
 	m_flRotationTheta = 0;
 	m_vecRotationAxis = Vector(0, 1, 0);
 	m_bTakesDamage = false;
+	m_bDrawTransparent = false;
 	m_iHealth = 3;
 }
 

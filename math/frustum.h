@@ -32,6 +32,7 @@ class Matrix4x4;
 class CFrustum
 {
 public:
+	CFrustum() {};
 	CFrustum(const Matrix4x4& m);
 
 public:

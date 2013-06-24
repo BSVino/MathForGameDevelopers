@@ -60,6 +60,7 @@ public:
 	bool      m_bHitByTraces;
 	bool      m_bEnemyAI;
 	bool      m_bTakesDamage;
+	bool      m_bDrawTransparent;
 	int       m_iHealth;
 
 	float     m_flShotTime;

@@ -21,6 +21,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <common/common.h>
 
+#include <math/frustum.h>
+
 #include <renderer/application.h>
 
 #include "handle.h"
@@ -75,6 +77,8 @@ public:
 
 	void Update(float dt);
 	void Draw();
+	void DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bTransparent);
+	void MergeSortTransparentRenderList();
 	void GameLoop();
 
 	CCharacter* CreateCharacter();
@@ -87,12 +91,16 @@ private:
 	int m_iLastMouseX;
 	int m_iLastMouseY;
 
+	CFrustum m_oFrameFrustum;
+
 	vector<CPuff> m_aPuffs;
 	vector<CBulletTracer> m_aTracers;
 
 	size_t m_iMonsterTexture;
 
-	CCharacter* m_apEntityList[MAX_CHARACTERS];
+	CCharacter*              m_apEntityList[MAX_CHARACTERS];
+	std::vector<CCharacter*> m_apRenderOpaqueList;
+	std::vector<CCharacter*> m_apRenderTransparentList;
 
 	// This is the player character
 	CHandle m_hPlayer;
