@@ -17,6 +17,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "game.h"
 
+#if 0
 int main(int argc, char* argv[])
 {
 	// Create a game
@@ -34,3 +35,18 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+#endif
+
+#include "axisangle.h"
+
+int main(int argc, char* argv[])
+{
+	Vector r = RotateVectorAroundAxisAngle(Vector(0, 1, 0), 90, Vector(1, 0, 0));
+	printf("Rotating (1, 0, 0) 90 degrees around (0, 1, 0): %f %f %f\n", r.x, r.y, r.z);
+
+	r = RotateVectorAroundAxisAngle(Vector(0, 0, 1), 90, Vector(1, 0, 0));
+	printf("Rotating (1, 0, 0) 90 degrees around (0, 0, 1): %f %f %f\n", r.x, r.y, r.z);
+
+	r = RotateVectorAroundAxisAngle(Vector(1, 1, 1).Normalized(), 90, Vector(1, 0, 0));
+	printf("Rotating (1, 0, 0) 90 degrees around (.577, .577, .577): %f %f %f\n", r.x, r.y, r.z);
+}
