@@ -90,6 +90,9 @@
     <ClCompile Include="math\frustum.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="math\quaternion.cpp">
+      <Filter>Source Files\math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib">

@@ -37,16 +37,36 @@ int main(int argc, char* argv[])
 
 #endif
 
-#include "axisangle.h"
+#include <iostream>
+#include "quaternion.h"
 
 int main(int argc, char* argv[])
 {
-	Vector r = RotateVectorAroundAxisAngle(Vector(0, 1, 0), 90, Vector(1, 0, 0));
-	printf("Rotating (1, 0, 0) 90 degrees around (0, 1, 0): %f %f %f\n", r.x, r.y, r.z);
+	printf("Quaternions for:\n\n");
 
-	r = RotateVectorAroundAxisAngle(Vector(0, 0, 1), 90, Vector(1, 0, 0));
-	printf("Rotating (1, 0, 0) 90 degrees around (0, 0, 1): %f %f %f\n", r.x, r.y, r.z);
+	Quaternion q1(Vector(1, 0, 0), 0);
+	printf("Rotating 0 degrees around (1, 0, 0): (%f, %f, %f, %f)\n", q1.w, q1.x, q1.y, q1.z);
 
-	r = RotateVectorAroundAxisAngle(Vector(1, 1, 1).Normalized(), 90, Vector(1, 0, 0));
-	printf("Rotating (1, 0, 0) 90 degrees around (.577, .577, .577): %f %f %f\n", r.x, r.y, r.z);
+	std::string s;
+	std::getline(std::cin, s);
+
+	Quaternion q2(Vector(1, 0, 0), 90);
+	printf("Rotating 90 degrees around (1, 0, 0): (%f, %f, %f, %f)\n", q2.w, q2.x, q2.y, q2.z);
+
+	std::getline(std::cin, s);
+
+	Quaternion q3(Vector(1, 0, 0), 180);
+	printf("Rotating 180 degrees around (1, 0, 0): (%f, %f, %f, %f)\n", q3.w, q3.x, q3.y, q3.z);
+
+	std::getline(std::cin, s);
+
+	Quaternion q4(Vector(0, 1, 0), 90);
+	printf("Rotating 90 degrees around (0, 1, 0): (%f, %f, %f, %f)\n", q4.w, q4.x, q4.y, q4.z);
+
+	std::getline(std::cin, s);
+
+	Quaternion q5(Vector(0, 1, 0), 180);
+	printf("Rotating 180 degrees around (0, 1, 0): (%f, %f, %f, %f)\n", q5.w, q5.x, q5.y, q5.z);
+
+	std::getline(std::cin, s);
 }
