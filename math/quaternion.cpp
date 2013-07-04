@@ -17,3 +17,14 @@ Quaternion::Quaternion(const Vector& n, float a)
 	y = n.y*sin(a/2);
 	z = n.z*sin(a/2);
 }
+
+// http://youtu.be/A6A0rpV9ElA
+const Quaternion Quaternion::Inverted() const
+{
+	Quaternion q;
+	q.w = w;
+	q.x = -x;
+	q.y = -y;
+	q.z = -z;
+	return q;
+}
