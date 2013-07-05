@@ -17,6 +17,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "shaders.h"
 
+#include <memory>
 #include <fstream>
 
 #include <GL3/gl3w.h>
