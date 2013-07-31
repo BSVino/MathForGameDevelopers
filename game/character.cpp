@@ -44,12 +44,33 @@ void CCharacter::SetTransform(const Vector& vecScaling, float flTheta, const Vec
 
 void CCharacter::SetTranslation(const Vector& vecTranslation)
 {
+	m_vecTranslation = vecTranslation;
+
+	BuildTransform();
+}
+
+void CCharacter::SetRotation(const EAngle& angRotation)
+{
+	angRotation.ToAxisAngle(m_vecRotationAxis, m_flRotationTheta);
+
+	BuildTransform();
+}
+
+void CCharacter::SetRotation(const Quaternion& qRotation)
+{
+	qRotation.ToAxisAngle(m_vecRotationAxis, m_flRotationTheta);
+
+	BuildTransform();
+}
+
+void CCharacter::BuildTransform()
+{
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
 	Matrix4x4 mScaling, mRotation, mTranslation;
 	mScaling.SetScale(m_vecScaling);
 	mRotation.SetRotation(m_flRotationTheta, m_vecRotationAxis);
-	mTranslation.SetTranslation(vecTranslation);
+	mTranslation.SetTranslation(m_vecTranslation);
 	m_mTransform = mTranslation * mRotation * mScaling;
 
 	// Produce an inverse transformation matrix from three inverse TRS matrices.
@@ -57,7 +78,7 @@ void CCharacter::SetTranslation(const Vector& vecTranslation)
 	Matrix4x4 mScalingInverse, mRotationInverse, mTranslationInverse;
 	mScalingInverse.SetScale(1/m_vecScaling);
 	mRotationInverse = mRotation.Transposed();
-	mTranslationInverse.SetTranslation(-vecTranslation);
+	mTranslationInverse.SetTranslation(-m_vecTranslation);
 	m_mTransformInverse = mScalingInverse * mRotationInverse * mTranslationInverse;
 }
 

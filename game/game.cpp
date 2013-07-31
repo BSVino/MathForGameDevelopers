@@ -20,6 +20,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <math/collision.h>
 #include <math/frustum.h>
 #include <maths.h>
+#include <math/quaternion.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderingcontext.h>
@@ -292,6 +293,29 @@ void CGame::Update(float dt)
 
 		pCharacter->SetTranslation(pCharacter->m_mTransform.GetTranslation() + pCharacter->m_vecVelocity * dt);
 	}
+
+	float flTime = TriangleWave(Game()->GetTime(), 5); // Every 5 seconds we'll start over again.
+	float t = RemapClamp(flTime, 0.2f, 0.8f, 0, 1);    // Leave some space at the start and end where they stand still
+
+	// These two should be equivalent rotations:
+	EAngle angStart(0, 90, 0);
+	Quaternion qStart(Vector(0, 1, 0), 90);
+
+	// These two should be equivalent rotations:
+	EAngle angEnd(90, 0, 90);
+	Quaternion qEnd = Quaternion(Vector(0, 0, 1), 90) * Quaternion(Vector(1, 0, 0), 90);
+
+	// I'm converting the Eulers to Vectors so that I can do a 'slerp' on them.
+	// I'm not creating operator overloads for EAngle since we really shouldn't
+	// be doing this operation on them anyways.
+	Vector vecStart(angStart.p, angStart.y, angStart.r);
+	Vector vecEnd(angEnd.p, angEnd.y, angEnd.r);
+	Vector vecCurrent = vecStart + (vecEnd - vecStart) * t; // Here's the 'slerp'
+	EAngle angCurrent(vecCurrent.x, vecCurrent.y, vecCurrent.z);
+
+	// Set the two objects to their respective rotations and we'll see which one works better!
+	m_hPropEuler->SetRotation(angCurrent);
+	m_hPropQuaternion->SetRotation(qStart.Slerp(qEnd, t));
 }
 
 void CGame::Draw()
@@ -569,35 +593,17 @@ void CGame::GameLoop()
 	m_hPlayer->m_aabbSize = AABB(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
 	m_hPlayer->m_bTakesDamage = true;
 
-	Vector vecMonsterMin = Vector(-1, 0, -1);
-	Vector vecMonsterMax = Vector(1, 2, 1);
+	m_hPropEuler = CreateCharacter();
+	m_hPropEuler->SetTransform(Vector(2, 0.5f, 0.5f), 0, Vector(0, 1, 0), Vector(0, 3, 4));
+	m_hPropEuler->m_aabbSize.vecMin = Vector(-1, -1, -1);
+	m_hPropEuler->m_aabbSize.vecMax = Vector(1, 1, 1);
+	m_hPropEuler->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
-	CCharacter* pTarget1 = CreateCharacter();
-	pTarget1->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, 4));
-	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
-	pTarget1->m_aabbSize.vecMax = vecMonsterMax;
-	pTarget1->m_iBillboardTexture = m_iMonsterTexture;
-	pTarget1->m_bEnemyAI = true;
-	pTarget1->m_bTakesDamage = true;
-	pTarget1->m_bDrawTransparent = true;
-
-	CCharacter* pTarget2 = CreateCharacter();
-	pTarget2->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(3, 0, -2));
-	pTarget2->m_aabbSize.vecMin = vecMonsterMin;
-	pTarget2->m_aabbSize.vecMax = vecMonsterMax;
-	pTarget2->m_iBillboardTexture = m_iMonsterTexture;
-	pTarget2->m_bEnemyAI = true;
-	pTarget2->m_bTakesDamage = true;
-	pTarget2->m_bDrawTransparent = true;
-
-	CCharacter* pTarget3 = CreateCharacter();
-	pTarget3->SetTransform(Vector(3, 3, 3), 0, Vector(0, 1, 0), Vector(-5, 0, 8));
-	pTarget3->m_aabbSize.vecMin = vecMonsterMin;
-	pTarget3->m_aabbSize.vecMax = vecMonsterMax;
-	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
-	pTarget3->m_bEnemyAI = true;
-	pTarget3->m_bTakesDamage = true;
-	pTarget3->m_bDrawTransparent = true;
+	m_hPropQuaternion = CreateCharacter();
+	m_hPropQuaternion->SetTransform(Vector(2, 0.5f, 0.5f), 0, Vector(0, 1, 0), Vector(0, 3, -4));
+	m_hPropQuaternion->m_aabbSize.vecMin = Vector(-1, -1, -1);
+	m_hPropQuaternion->m_aabbSize.vecMax = Vector(1, 1, 1);
+	m_hPropQuaternion->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);

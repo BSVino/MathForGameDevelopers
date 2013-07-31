@@ -41,3 +41,28 @@ float Remap(float x, float t1, float t2, float s1, float s2)
 
 	return green;
 }
+
+float RemapClamp(float x, float t1, float t2, float s1, float s2)
+{
+	if (x < t1)
+		return s1;
+	if (x > t2)
+		return s2;
+
+	return Remap(x, t1, t2, s1, s2);
+}
+
+// Returns a triangle wave on the interval [0, 1]
+inline float TriangleWave(float flTime, float flLength)
+{
+	// flTime is a value in the interval [0, infinity].
+
+	// flMod is in the interval [0, flLength]
+	float flMod = (float)fmod(flTime, flLength);
+
+	// flRemapped is in the interval [-1, 1]
+	float flRemapped = Remap(flMod, 0, flLength, -1, 1);
+
+	// The negative values are flipped to positive, so that you have a triangle wave on [0, 1]: /\/\/\/\/
+	return fabs(flRemapped);
+}

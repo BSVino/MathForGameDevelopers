@@ -23,6 +23,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <matrix.h>
 #include <euler.h>
 #include <aabb.h>
+#include <quaternion.h>
 
 using std::vector;
 
@@ -35,14 +36,21 @@ public:
 public:
 	void SetTransform(const Vector& vecScaling, float flTheta, const Vector& vecRotationAxis, const Vector& vecTranslation);
 	void SetTranslation(const Vector& vecTranslation);
+	void SetRotation(const EAngle& angRotation);
+	void SetRotation(const Quaternion& qRotation);
+
 	void ShotEffect(class CRenderingContext* c);
 
 	void TakeDamage(int iDamage);
+
+private:
+	void BuildTransform();
 
 public:
 	int       m_iIndex;
 	int       m_iParity;
 
+	Vector    m_vecTranslation;
 	Vector    m_vecScaling;
 	Vector    m_vecRotationAxis;
 	float     m_flRotationTheta;

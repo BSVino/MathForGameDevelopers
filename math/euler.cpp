@@ -18,8 +18,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "euler.h"
 
 #include "vector.h"
+#include "quaternion.h"
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 Vector EAngle::ToVector() const
@@ -35,6 +35,18 @@ Vector EAngle::ToVector() const
 	result.z = sin(y2)*cos(p2);
 
 	return result;
+}
+
+void EAngle::ToAxisAngle(Vector& vecAxis, float& flAngle) const
+{
+	// Use Quaternions to do our dirty work.
+	Quaternion qRoll(Vector(1, 0, 0), r);
+	Quaternion qPitch(Vector(0, 0, 1), p);
+	Quaternion qYaw(Vector(0, 1, 0), y);
+
+	Quaternion qEuler = qYaw * qPitch * qRoll;
+
+	qEuler.ToAxisAngle(vecAxis, flAngle);
 }
 
 void EAngle::Normalize()
