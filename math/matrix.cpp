@@ -537,41 +537,30 @@ void Matrix4x4::SetRightVector(const Vector& v)
 	m[2][2] = v.z;
 }
 
-// Not a true inversion, only works if the matrix is a translation/rotation matrix.
-void Matrix4x4::InvertRT()
+// Use the information embedded in a matrix to create its inverse.
+// http://youtu.be/7CxKAtWqHC8
+Matrix4x4 Matrix4x4::InvertedTR() const
 {
-	TAssert(fabs(GetForwardVector().LengthSqr() - 1) < 0.00001f);
+	// This method can only be used if the matrix is a translation/rotation matrix.
+	// The below asserts will trigger if this is not the case.
+	TAssert(fabs(GetForwardVector().LengthSqr() - 1) < 0.00001f);   // Each basis vector should be length 1.
 	TAssert(fabs(GetUpVector().LengthSqr() - 1) < 0.00001f);
 	TAssert(fabs(GetRightVector().LengthSqr() - 1) < 0.00001f);
+	TAssert(fabs(GetForwardVector().Dot(GetUpVector())) < 0.0001f); // All vectors should be orthogonal.
+	TAssert(fabs(GetForwardVector().Dot(GetRightVector())) < 0.0001f);
+	TAssert(fabs(GetRightVector().Dot(GetUpVector())) < 0.0001f);
 
-	Matrix4x4 t;
+	Matrix4x4 M;
 
-	for (int h = 0; h < 3; h++)
-		for (int v = 0; v < 3; v++)
-			t.m[h][v] = m[v][h];
+	// Create the transposed upper 3x3 matrix
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			M.m[i][j] = m[j][i];
 
-	Vector vecTranslation = GetTranslation();
+	// The new matrix translation = -Rt
+	M.SetTranslation(-(M*GetTranslation()));
 
-	Init(t);
-
-	SetTranslation(t*(-vecTranslation));
-}
-
-Matrix4x4 Matrix4x4::InvertedRT() const
-{
-	TAssert(fabs(GetForwardVector().LengthSqr() - 1) < 0.00001f);
-	TAssert(fabs(GetUpVector().LengthSqr() - 1) < 0.00001f);
-	TAssert(fabs(GetRightVector().LengthSqr() - 1) < 0.00001f);
-
-	Matrix4x4 r;
-
-	for (int h = 0; h < 3; h++)
-		for (int v = 0; v < 3; v++)
-			r.m[h][v] = m[v][h];
-
-	r.SetTranslation(r*(-GetTranslation()));
-
-	return r;
+	return M;
 }
 
 float Matrix4x4::Trace() const

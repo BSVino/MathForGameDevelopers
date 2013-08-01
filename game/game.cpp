@@ -197,10 +197,12 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		if (!pCharacter->m_bHitByTraces)
 			continue;
 
+		Matrix4x4 mInverse = pCharacter->m_mTransform.InvertedTR();
+
 		// The v0 and v1 are in the global coordinate system and we need to transform it to the target's
 		// local coordinate system to use axis-aligned intersection. We do so using the inverse transform matrix.
 		// http://youtu.be/-Fn4atv2NsQ
-		if (LineAABBIntersection(pCharacter->m_aabbSize, pCharacter->m_mTransformInverse*v0, pCharacter->m_mTransformInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
+		if (LineAABBIntersection(pCharacter->m_aabbSize, mInverse*v0, mInverse*v1, vecTestIntersection, flTestFraction) && flTestFraction < flLowestFraction)
 		{
 			// Once we have the result we can use the regular transform matrix to get it back in
 			// global coordinates. http://youtu.be/-Fn4atv2NsQ
@@ -276,7 +278,6 @@ void CGame::Update(float dt)
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
 	m_hPlayer->m_mTransform = mPlayerTranslation * mPlayerRotation * mPlayerScaling;
-	m_hPlayer->m_mTransformInverse = m_hPlayer->m_mTransform.InvertedRT();
 
 	float flMonsterSpeed = 0.5f;
 	for (size_t i = 0; i < MAX_CHARACTERS; i++)
@@ -594,13 +595,13 @@ void CGame::GameLoop()
 	m_hPlayer->m_bTakesDamage = true;
 
 	m_hPropEuler = CreateCharacter();
-	m_hPropEuler->SetTransform(Vector(2, 0.5f, 0.5f), 0, Vector(0, 1, 0), Vector(0, 3, 4));
+	m_hPropEuler->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(0, 3, 4));
 	m_hPropEuler->m_aabbSize.vecMin = Vector(-1, -1, -1);
 	m_hPropEuler->m_aabbSize.vecMax = Vector(1, 1, 1);
 	m_hPropEuler->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
 	m_hPropQuaternion = CreateCharacter();
-	m_hPropQuaternion->SetTransform(Vector(2, 0.5f, 0.5f), 0, Vector(0, 1, 0), Vector(0, 3, -4));
+	m_hPropQuaternion->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(0, 3, -4));
 	m_hPropQuaternion->m_aabbSize.vecMin = Vector(-1, -1, -1);
 	m_hPropQuaternion->m_aabbSize.vecMax = Vector(1, 1, 1);
 	m_hPropQuaternion->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
@@ -609,13 +610,13 @@ void CGame::GameLoop()
 	Vector vecPropMax = Vector(1, 2, 1);
 
 	CCharacter* pProp1 = CreateCharacter();
-	pProp1->SetTransform(Vector(2, 1, 4), 20, Vector(0, 1, 0), Vector(18, 0, 10));
+	pProp1->SetTransform(Vector(1, 1, 1), 20, Vector(0, 1, 0), Vector(18, 0, 10));
 	pProp1->m_aabbSize.vecMin = vecPropMin;
 	pProp1->m_aabbSize.vecMax = vecPropMax;
 	pProp1->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
 	CCharacter* pProp2 = CreateCharacter();
-	pProp2->SetTransform(Vector(1, 2, 3), 30, Vector(0, 1, 0), Vector(10, 0, 15));
+	pProp2->SetTransform(Vector(1, 1, 1), 30, Vector(0, 1, 0), Vector(10, 0, 15));
 	pProp2->m_aabbSize.vecMin = vecPropMin;
 	pProp2->m_aabbSize.vecMax = vecPropMax;
 	pProp2->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
@@ -627,7 +628,7 @@ void CGame::GameLoop()
 	pProp3->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
 	CCharacter* pProp4 = CreateCharacter();
-	pProp4->SetTransform(Vector(2, 2, 2), 40, Vector(0, 1, 0), Vector(-2, 0, 14));
+	pProp4->SetTransform(Vector(1, 1, 1), 40, Vector(0, 1, 0), Vector(-2, 0, 14));
 	pProp4->m_aabbSize.vecMin = vecPropMin;
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);

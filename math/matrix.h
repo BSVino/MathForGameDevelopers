@@ -118,8 +118,7 @@ public:
 	Vector		GetUpVector() const { return Vector(m[1][0], m[1][1], m[1][2]); }
 	Vector		GetRightVector() const { return Vector(m[2][0], m[2][1], m[2][2]); }
 
-	void		InvertRT();
-	Matrix4x4	InvertedRT() const;
+	Matrix4x4	InvertedTR() const;
 
 	float		Trace() const;
 
@@ -136,6 +135,11 @@ public:
 	struct MVector4D
 	{
 		float x, y, z, w;
+
+		float Length() const
+		{
+			return sqrt(x*x + y*y + z*z + w*w);
+		}
 	};
 
 	union {

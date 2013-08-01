@@ -55,7 +55,6 @@ public:
 	Vector    m_vecRotationAxis;
 	float     m_flRotationTheta;
 	Matrix4x4 m_mTransform;
-	Matrix4x4 m_mTransformInverse;
 	Vector    m_vecMovement;
 	Vector    m_vecMovementGoal;
 	Vector    m_vecVelocity;

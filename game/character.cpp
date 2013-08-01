@@ -72,14 +72,6 @@ void CCharacter::BuildTransform()
 	mRotation.SetRotation(m_flRotationTheta, m_vecRotationAxis);
 	mTranslation.SetTranslation(m_vecTranslation);
 	m_mTransform = mTranslation * mRotation * mScaling;
-
-	// Produce an inverse transformation matrix from three inverse TRS matrices.
-	// Order still matters! http://youtu.be/onSyW44OnxA
-	Matrix4x4 mScalingInverse, mRotationInverse, mTranslationInverse;
-	mScalingInverse.SetScale(1/m_vecScaling);
-	mRotationInverse = mRotation.Transposed();
-	mTranslationInverse.SetTranslation(-m_vecTranslation);
-	m_mTransformInverse = mScalingInverse * mRotationInverse * mTranslationInverse;
 }
 
 void CCharacter::ShotEffect(CRenderingContext* c)
@@ -105,24 +97,24 @@ void CCharacter::ShotEffect(CRenderingContext* c)
 
 void CCharacter::TakeDamage(int iDamage)
 {
+	if (!m_bTakesDamage)
+		return;
+
 	m_iHealth -= iDamage;
 
 	if (m_iHealth <= 0)
 	{
-		if (m_bTakesDamage)
-		{
-			// Spawn another baddy to take this guy's place.
-			CCharacter* pNew = Game()->CreateCharacter();
+		// Spawn another baddy to take this guy's place.
+		CCharacter* pNew = Game()->CreateCharacter();
 
-			// Position the new monster in a random spot near the player.
-			pNew->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector((float)(rand()%20)-10, 0, (float)(rand()%20)-10));
+		// Position the new monster in a random spot near the player.
+		pNew->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector((float)(rand()%20)-10, 0, (float)(rand()%20)-10));
 
-			pNew->m_aabbSize.vecMin = Vector(-1, 0, -1);
-			pNew->m_aabbSize.vecMax = Vector(1, 2, 1);
-			pNew->m_iBillboardTexture = Game()->GetMonsterTexture();
-			pNew->m_bEnemyAI = true;
-			pNew->m_bTakesDamage = true;
-		}
+		pNew->m_aabbSize.vecMin = Vector(-1, 0, -1);
+		pNew->m_aabbSize.vecMax = Vector(1, 2, 1);
+		pNew->m_iBillboardTexture = Game()->GetMonsterTexture();
+		pNew->m_bEnemyAI = true;
+		pNew->m_bTakesDamage = true;
 
 		// We're at zero health, time to die.
 		Game()->RemoveCharacter(this);
