@@ -314,24 +314,21 @@ Matrix4x4 Matrix4x4::ProjectOrthographic(float flLeft, float flRight, float flBo
 	return m;
 }
 
+// In order to do rendering we have to transform our global coordinates to be
+// in the local space of the camera, with the specific requirement that the
+// camera looks down the -Z axis. In this function we construct a matrix for
+// this transformation. http://youtu.be/3ZmqJb7J5wE
 Matrix4x4 Matrix4x4::ConstructCameraView(const Vector& vecPosition, const Vector& vecDirection, const Vector& vecUp)
 {
-	Matrix4x4 m;
-	
-	m.Identity();
-
 	TAssert(fabs(vecDirection.LengthSqr()-1) < 0.0001f);
 
-	Vector vecCamSide = CrossProduct(vecDirection, vecUp).Normalized();
-	Vector vecCamUp = CrossProduct(vecCamSide, vecDirection);
+	Vector vecCamRight = CrossProduct(vecDirection, vecUp).Normalized();
+	Vector vecCamUp = CrossProduct(vecCamRight, vecDirection);
 
-	m.SetForwardVector(Vector(vecCamSide.x, vecCamUp.x, -vecDirection.x));
-	m.SetUpVector(Vector(vecCamSide.y, vecCamUp.y, -vecDirection.y));
-	m.SetRightVector(Vector(vecCamSide.z, vecCamUp.z, -vecDirection.z));
-
-	m.AddTranslation(-vecPosition);
-
-	return m;
+	// OpenGL wants to be looking down the -Z axis. So, pass -vecDirection into the Z position.
+	// Then invert the matrix because we're going from global space into local camera space.
+	// Easy!
+	return Matrix4x4(vecCamRight, vecCamUp, -vecDirection, vecPosition).InvertedTR();
 }
 
 Matrix4x4 Matrix4x4::operator+=(const Vector& v)
