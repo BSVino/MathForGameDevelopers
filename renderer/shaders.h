@@ -19,6 +19,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <map>
 #include <vector>
+#include <string>
+#include <string.h>
 
 #include <vector.h>
 #include <vector2d.h>

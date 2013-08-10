@@ -17,6 +17,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #pragma once
 
+#include <cmath>
+
 // https://www.youtube.com/watch?v=qJq7I2DLGzI
 float Approach(float flGoal, float flCurrent, float dt)
 {

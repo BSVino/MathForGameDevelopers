@@ -15,7 +15,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <tinker_platform.h>
+#include <common_platform.h>
 
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -28,7 +28,9 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <netinet/in.h>
 #include <linux/if.h>
 #include <X11/Xlib.h>
+#include <string.h>
 
+#include <common.h>
 #include <strutils.h>
 
 void GetMACAddresses(unsigned char*& paiAddresses, size_t& iAddresses)
@@ -106,61 +108,65 @@ void SleepMS(size_t iMS)
 	usleep(iMS);
 }
 
-void OpenBrowser(const tstring& sURL)
+void OpenBrowser(const std::string& sURL)
 {
-	int iSystem = system((tstring("firefox ") + sURL).c_str());
+	int iSystem = system((std::string("firefox ") + sURL).c_str());
 }
 
-void OpenExplorer(const tstring& sDirectory)
+void OpenExplorer(const std::string& sDirectory)
 {
-	int iSystem = system((tstring("gnome-open ") + sDirectory).c_str());
+	int iSystem = system((std::string("gnome-open ") + sDirectory).c_str());
 }
 
-void Alert(const tstring& sMessage)
+void Alert(const std::string& sMessage)
 {
 	fputs(sMessage.c_str(), stderr);
 }
 
-void CreateMinidump(void* pInfo, tchar* pszDirectory)
+void CreateMinidump(void* pInfo, char* pszDirectory)
 {
 }
 
-tstring GetClipboard()
+std::string GetClipboard()
 {
 }
 
-void SetClipboard(const tstring& sBuf)
+void SetClipboard(const std::string& sBuf)
 {
 }
 
-tstring GetAppDataDirectory(const tstring& sDirectory, const tstring& sFile)
+std::string GetAppDataDirectory(const std::string& sDirectory, const std::string& sFile)
 {
 	char* pszVar = getenv("HOME");
 
-	tstring sSuffix;
+	std::string sSuffix;
 	sSuffix.append(".").append(sDirectory).append("/").append(sFile);
 
-	tstring sReturn(pszVar);
+	std::string sReturn(pszVar);
 
-	mkdir((tstring(sReturn).append("/").append(".").append(sDirectory)).c_str(), 0777);
+	mkdir((std::string(sReturn).append("/").append(".").append(sDirectory)).c_str(), 0777);
 
 	sReturn.append("/").append(sSuffix);
 	return sReturn;
 }
 
-tvector<tstring> ListDirectory(const tstring& sDirectory, bool bDirectories)
+std::vector<std::string> ListDirectory(const std::string& sDirectory, bool bDirectories)
 {
-	tvector<tstring> asResult;
+	std::vector<std::string> asResult;
 
 	struct dirent *dp;
 
 	DIR *dir = opendir((sDirectory).c_str());
+	
+	if (!dir)
+		return asResult;
+
 	while ((dp=readdir(dir)) != NULL)
 	{
 		if (!bDirectories && (dp->d_type == DT_DIR))
 			continue;
 
-		tstring sName = dp->d_name;
+		std::string sName = dp->d_name;
 		if (sName == ".")
 			continue;
 
@@ -174,7 +180,7 @@ tvector<tstring> ListDirectory(const tstring& sDirectory, bool bDirectories)
 	return asResult;
 }
 
-bool IsFile(const tstring& sPath)
+bool IsFile(const std::string& sPath)
 {
 	struct stat stFileInfo;
 	bool blnReturn;
@@ -188,7 +194,7 @@ bool IsFile(const tstring& sPath)
 		return false;
 }
 
-bool IsDirectory(const tstring& sPath)
+bool IsDirectory(const std::string& sPath)
 {
 	struct stat stFileInfo;
 	bool blnReturn;
@@ -202,14 +208,14 @@ bool IsDirectory(const tstring& sPath)
 		return false;
 }
 
-void CreateDirectoryNonRecursive(const tstring& sPath)
+void CreateDirectoryNonRecursive(const std::string& sPath)
 {
 	TUnimplemented();
 
 	mkdir(sPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
-bool CopyFileTo(const tstring& sFrom, const tstring& sTo, bool bOverride)
+bool CopyFileTo(const std::string& sFrom, const std::string& sTo, bool bOverride)
 {
 	TUnimplemented();
 
@@ -240,12 +246,12 @@ bool CopyFileTo(const tstring& sFrom, const tstring& sTo, bool bOverride)
 	return true;
 }
 
-tstring FindAbsolutePath(const tstring& sPath)
+std::string FindAbsolutePath(const std::string& sPath)
 {
 	TUnimplemented();
 
 	char* pszFullPath = realpath(sPath.c_str(), nullptr);
-	tstring sFullPath = pszFullPath;
+	std::string sFullPath = pszFullPath;
 	free(pszFullPath);
 
 	return sFullPath;
@@ -267,9 +273,9 @@ void DebugPrint(const char* pszText)
 	puts(pszText);
 }
 
-void Exec(const tstring& sLine)
+void Exec(const std::string& sLine)
 {
-	int iSystem = system((tstring("./") + sLine).c_str());
+	int iSystem = system((std::string("./") + sLine).c_str());
 }
 
 // Not worried about supporting these on Linux right now.

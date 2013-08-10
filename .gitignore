@@ -4,3 +4,6 @@
 /*.opensdf
 /Debug
 /Release
+mfgd
+*.o
+.depend

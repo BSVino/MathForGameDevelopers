@@ -22,6 +22,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <GL/glfw.h>
 #include <iostream>
 #include <fstream>
+#include <string.h>
 
 #include <strutils.h>
 #include <common_platform.h>

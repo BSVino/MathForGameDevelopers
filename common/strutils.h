@@ -24,6 +24,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <sstream>
 
 #include <string>
+#include <stdio.h>
 #include <stdarg.h>
 
 using std::find_if;

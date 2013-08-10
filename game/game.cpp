@@ -17,6 +17,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "game.h"
 
+#include <cstring>
+
 #include <math/collision.h>
 #include <math/frustum.h>
 #include <maths.h>
