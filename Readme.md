@@ -71,7 +71,13 @@ Want to send your game to a sexy friend? You'll need to do some extra steps.
 
 (The steps are the same for non-sexy friends.)
 
-Right now only Windows compiling is supported, but I like patches!
+For Linux the steps are:
+
+1. Make sure you have GCC installed for your system.
+2. Download the MFGD project files and unpack them somewhere on your hard drive.
+3. Open a terminal and navigate to this directory, eg "cd ~/mfgd"
+4. Type "make"
+5. Type "./run_mfgd"
 
 Tinker
 ------
