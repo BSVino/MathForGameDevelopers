@@ -312,7 +312,7 @@ void CGame::Update(float dt)
 	Matrix4x4 mRotation = m_hMerryGoRound->m_mTransform;
 	mRotation.SetTranslation(Vector(0, 0, 0));
 
-	// Spin the merry go round and the object on it. http://youtu.be/QRhSOMd30IM
+	// Spin the merry go round and the object on it. http://youtu.be/uX3BVzT3jaw
 	Matrix4x4 mNewMGRTransform = mTranslation * mSpin * mRotation;
 	Matrix4x4 mNewToyBoxTransform = m_hMerryGoRound->m_mTransform * mSpin
 		* m_hMerryGoRound->m_mTransform.InvertedTR() * m_hToyBox->m_mTransform;
