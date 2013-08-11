@@ -71,7 +71,7 @@ void CCharacter::BuildTransform()
 	mScaling.SetScale(m_vecScaling);
 	mRotation.SetRotation(m_flRotationTheta, m_vecRotationAxis);
 	mTranslation.SetTranslation(m_vecTranslation);
-	m_mTransform = mTranslation * mRotation * mScaling;
+	SetGlobalTransform(mTranslation * mRotation * mScaling);
 }
 
 void CCharacter::ShotEffect(CRenderingContext* c)
@@ -119,4 +119,67 @@ void CCharacter::TakeDamage(int iDamage)
 		// We're at zero health, time to die.
 		Game()->RemoveCharacter(this);
 	}
+}
+
+// Make this character move along with the parent character http://youtu.be/KI0KZzqC6sA
+void CCharacter::SetMoveParent(CCharacter* pParent)
+{
+	if (m_hMoveParent.Get() == pParent)
+		return;
+
+	if (m_hMoveParent.Get())
+		// We're either setting to a different parent or setting to null.
+		// If we already have a move parent then we need to calculate the global transform.
+		// Good thing we have a handy function for that.
+		m_mGlobalTransform = GetGlobalTransform();
+
+	m_hMoveParent = pParent;
+
+	if (!pParent)
+		return;
+
+	// The local transform can be calculated by moving the
+	// global coordinates into the move parent local space.
+	m_mLocalTransform = m_hMoveParent->GetGlobalTransform().InvertedTR() * m_mGlobalTransform;
+}
+
+const Matrix4x4 CCharacter::GetGlobalTransform() const
+{
+	if (m_hMoveParent.Get())
+		// Calculate the global transform on the fly.
+		// In many video games this value is calculated only once every time
+		// the move parent is changed, then cached. Here we don't worry about
+		// performance so much.
+		return m_hMoveParent->GetGlobalTransform() * m_mLocalTransform;
+
+	return m_mGlobalTransform;
+}
+
+void CCharacter::SetGlobalTransform(const Matrix4x4& mGlobal)
+{
+	if (m_hMoveParent.Get())
+	{
+		// We're not using global coordinates so we have to transfer the global
+		// coordinates to local.
+		m_mLocalTransform = m_hMoveParent->GetGlobalTransform().InvertedTR() * mGlobal;
+		return;
+	}
+
+	m_mGlobalTransform = mGlobal;
+}
+
+const Vector CCharacter::GetGlobalOrigin() const
+{
+	return GetGlobalTransform().GetTranslation();
+}
+
+void CCharacter::SetGlobalOrigin(const Vector& vecOrigin)
+{
+	if (m_hMoveParent.Get())
+	{
+		m_mLocalTransform.SetTranslation(m_hMoveParent->GetGlobalTransform().InvertedTR() * vecOrigin);
+		return;
+	}
+
+	m_mGlobalTransform.SetTranslation(vecOrigin);
 }

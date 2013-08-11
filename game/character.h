@@ -25,6 +25,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <aabb.h>
 #include <quaternion.h>
 
+#include "handle.h"
+
 using std::vector;
 
 // This class holds information for a single character - eg the position and velocity of the player
@@ -43,6 +45,14 @@ public:
 
 	void TakeDamage(int iDamage);
 
+	void SetMoveParent(CCharacter* pParent);
+
+	const Matrix4x4 GetGlobalTransform() const;
+	void            SetGlobalTransform(const Matrix4x4& mGlobal);
+
+	const Vector GetGlobalOrigin() const;
+	void         SetGlobalOrigin(const Vector& vecOrigin);
+
 private:
 	void BuildTransform();
 
@@ -54,7 +64,7 @@ public:
 	Vector    m_vecScaling;
 	Vector    m_vecRotationAxis;
 	float     m_flRotationTheta;
-	Matrix4x4 m_mTransform;
+
 	Vector    m_vecMovement;
 	Vector    m_vecMovementGoal;
 	Vector    m_vecVelocity;
@@ -71,5 +81,13 @@ public:
 	int       m_iHealth;
 
 	float     m_flShotTime;
+
+private:
+	// If we have a move parent then we only use the local coordinates.
+	// Otherwise we'll only use the global coordinates. Use the functions
+	// provided to access.
+	Matrix4x4 m_mGlobalTransform;
+	Matrix4x4 m_mLocalTransform;
+	CHandle   m_hMoveParent;
 };
 

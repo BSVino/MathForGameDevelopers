@@ -33,8 +33,9 @@ public:
 	void operator=(const CCharacter* pCharacter);
 
 	CCharacter* Get() const;
-	CCharacter* operator->() const;
-	bool operator!() const;
+	CCharacter* operator->() const; // Operator overload for when you go hCharacter->GetGlobalOrigin()
+	operator CCharacter*() const;   // Operator overload for when you go CCharacter* pCharacter = hCharacter;
+	bool operator!() const;         // Operator overload for when you go if (!hCharacter)
 
 public:
 	size_t m_iIndex;

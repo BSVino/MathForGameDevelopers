@@ -54,6 +54,11 @@ CCharacter* CHandle::operator->() const
 	return Get();
 }
 
+CHandle::operator CCharacter*() const
+{
+	return Get();
+}
+
 bool CHandle::operator!() const
 {
 	return !Get();

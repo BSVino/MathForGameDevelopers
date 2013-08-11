@@ -155,8 +155,8 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 {
 	if (iButton == TINKER_KEY_MOUSE_LEFT && iState == TINKER_MOUSE_PRESSED)
 	{
-		Vector v0 = m_hPlayer->m_mTransform.GetTranslation() + Vector(0, 1, 0);
-		Vector v1 = m_hPlayer->m_mTransform.GetTranslation() + Vector(0, 1, 0) + m_hPlayer->m_angView.ToVector() * 100;
+		Vector v0 = m_hPlayer->GetGlobalOrigin() + Vector(0, 1, 0);
+		Vector v1 = m_hPlayer->GetGlobalOrigin() + Vector(0, 1, 0) + m_hPlayer->m_angView.ToVector() * 100;
 
 		Vector vecIntersection;
 		CCharacter* pHit = nullptr;
@@ -199,7 +199,7 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		if (!pCharacter->m_bHitByTraces)
 			continue;
 
-		Matrix4x4 mInverse = pCharacter->m_mTransform.InvertedTR();
+		Matrix4x4 mInverse = pCharacter->GetGlobalTransform().InvertedTR();
 
 		// The v0 and v1 are in the global coordinate system and we need to transform it to the target's
 		// local coordinate system to use axis-aligned intersection. We do so using the inverse transform matrix.
@@ -208,7 +208,7 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		{
 			// Once we have the result we can use the regular transform matrix to get it back in
 			// global coordinates. http://youtu.be/-Fn4atv2NsQ
-			vecIntersection = pCharacter->m_mTransform*vecTestIntersection;
+			vecIntersection = pCharacter->GetGlobalTransform()*vecTestIntersection;
 			flLowestFraction = flTestFraction;
 			pHit = pCharacter;
 		}
@@ -251,16 +251,16 @@ void CGame::Update(float dt)
 	m_hPlayer->m_vecVelocity.y = flSaveY;
 
 	// Update position and vecMovement. http://www.youtube.com/watch?v=c4b9lCfSDQM
-	m_hPlayer->SetTranslation(m_hPlayer->m_mTransform.GetTranslation() + m_hPlayer->m_vecVelocity * dt);
+	m_hPlayer->SetTranslation(m_hPlayer->GetGlobalOrigin() + m_hPlayer->m_vecVelocity * dt);
 	m_hPlayer->m_vecVelocity = m_hPlayer->m_vecVelocity + m_hPlayer->m_vecGravity * dt;
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
-	Vector vecTranslation = m_hPlayer->m_mTransform.GetTranslation();
+	Vector vecTranslation = m_hPlayer->GetGlobalOrigin();
 	if (vecTranslation.y < 0)
 		m_hPlayer->SetTranslation(Vector(vecTranslation.x, 0, vecTranslation.z));
 
 	// Grab the player's translation and make a translation only matrix. http://www.youtube.com/watch?v=iCazI3nKBf0
-	Vector vecPosition = m_hPlayer->m_mTransform.GetTranslation();
+	Vector vecPosition = m_hPlayer->GetGlobalOrigin();
 	Matrix4x4 mPlayerTranslation;
 	mPlayerTranslation.SetTranslation(vecPosition);
 
@@ -279,7 +279,7 @@ void CGame::Update(float dt)
 
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
-	m_hPlayer->m_mTransform = mPlayerTranslation * mPlayerRotation * mPlayerScaling;
+	m_hPlayer->SetGlobalTransform(mPlayerTranslation * mPlayerRotation * mPlayerScaling);
 
 	float flMonsterSpeed = 0.5f;
 	for (size_t i = 0; i < MAX_CHARACTERS; i++)
@@ -292,13 +292,17 @@ void CGame::Update(float dt)
 			continue;
 
 		// Update position and movement. http://www.youtube.com/watch?v=c4b9lCfSDQM
-		pCharacter->m_vecVelocity = (m_hPlayer->m_mTransform.GetTranslation() - pCharacter->m_mTransform.GetTranslation()).Normalized() * flMonsterSpeed;
+		pCharacter->m_vecVelocity = (m_hPlayer->GetGlobalOrigin() - pCharacter->GetGlobalOrigin()).Normalized() * flMonsterSpeed;
 
-		pCharacter->SetTranslation(pCharacter->m_mTransform.GetTranslation() + pCharacter->m_vecVelocity * dt);
+		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
 
-	// The easy way to do it. We're going to do it the hard way!
-	//m_hMerryGoRound->SetRotation(EAngle(0, Game()->GetTime() * 20, 0));
+	// This is a distance-squared comparison, much faster than a normal distance comparison.
+	float flMerryGoRoundSize = m_hMerryGoRound->m_aabbSize.GetRadius();
+	if ((m_hPlayer->GetGlobalOrigin() - m_hMerryGoRound->GetGlobalOrigin()).LengthSqr() < flMerryGoRoundSize*flMerryGoRoundSize)
+		m_hPlayer->SetMoveParent(m_hMerryGoRound);
+	else
+		m_hPlayer->SetMoveParent(nullptr);
 
 	// How much do we want to spin the merry go round? http://www.youtube.com/watch?v=6HaDoXWPICQ
 	Matrix4x4 mSpin;
@@ -306,19 +310,16 @@ void CGame::Update(float dt)
 
 	// The location of the merry go round. http://www.youtube.com/watch?v=iCazI3nKBf0
 	Matrix4x4 mTranslation;
-	mTranslation.SetTranslation(m_hMerryGoRound->m_mTransform.GetTranslation());
+	mTranslation.SetTranslation(m_hMerryGoRound->GetGlobalOrigin());
 
 	// The rotation of the merry go round will be the transform matrix, with the translation part zeroed out.
-	Matrix4x4 mRotation = m_hMerryGoRound->m_mTransform;
+	Matrix4x4 mRotation = m_hMerryGoRound->GetGlobalTransform();
 	mRotation.SetTranslation(Vector(0, 0, 0));
 
-	// Spin the merry go round and the object on it. http://youtu.be/uX3BVzT3jaw
+	// Spin the merry go round. http://youtu.be/uX3BVzT3jaw
 	Matrix4x4 mNewMGRTransform = mTranslation * mSpin * mRotation;
-	Matrix4x4 mNewToyBoxTransform = m_hMerryGoRound->m_mTransform * mSpin
-		* m_hMerryGoRound->m_mTransform.InvertedTR() * m_hToyBox->m_mTransform;
 
-	m_hMerryGoRound->m_mTransform = mNewMGRTransform;
-	m_hToyBox->m_mTransform = mNewToyBoxTransform;
+	m_hMerryGoRound->SetGlobalTransform(mNewMGRTransform);
 }
 
 void CGame::Draw()
@@ -332,7 +333,7 @@ void CGame::Draw()
 	CRenderer* pRenderer = GetRenderer();
 
 	// Tell the renderer how to set up the camera.
-	pRenderer->SetCameraPosition(m_hPlayer->m_mTransform.GetTranslation() - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
+	pRenderer->SetCameraPosition(m_hPlayer->GetGlobalOrigin() - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
 	pRenderer->SetCameraDirection(vecForward);
 	pRenderer->SetCameraUp(Vector(0, 1, 0));
 	pRenderer->SetCameraFOV(90);
@@ -383,7 +384,7 @@ void CGame::Draw()
 
 		// We need to scale the AABB using the character's scale values before we can use it to calculate our center/radius.
 		AABB aabbSizeWithScaling = pCharacter->m_aabbSize * pCharacter->m_vecScaling;
-		Vector vecCharacterCenter = pCharacter->m_mTransform.GetTranslation() + aabbSizeWithScaling.GetCenter();
+		Vector vecCharacterCenter = pCharacter->GetGlobalOrigin() + aabbSizeWithScaling.GetCenter();
 		float flCharacterRadius = aabbSizeWithScaling.GetRadius();
 
 		// If the entity is outside the viewing frustum then the player can't see it - don't draw it.
@@ -478,7 +479,7 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 
 			// Create a billboard by creating basis vectors. https://www.youtube.com/watch?v=puOTwCrEm7Q
 			Vector vecForward, vecRight, vecUp;
-			vecForward = pCharacter->m_mTransform.GetTranslation() - pRenderer->GetCameraPosition();
+			vecForward = pCharacter->GetGlobalOrigin() - pRenderer->GetCameraPosition();
 			vecRight = -Vector(0, 1, 0).Cross(vecForward).Normalized();
 			vecUp = vecForward.Cross(-vecRight).Normalized();
 
@@ -488,7 +489,7 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 				c.SetBlend(BLEND_ALPHA);
 			}
 
-			c.LoadTransform(pCharacter->m_mTransform);
+			c.LoadTransform(pCharacter->GetGlobalTransform());
 			c.Translate(Vector(0, pCharacter->m_aabbSize.GetHeight()/2, 0)); // Move the character up so his feet don't stick in the ground.
 			pCharacter->ShotEffect(&c);
 			c.RenderBillboard(pCharacter->m_iBillboardTexture, pCharacter->m_aabbSize.vecMax.x, vecUp, vecRight);
@@ -499,7 +500,7 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 
 			// The transform matrix holds all transformations for the player. Just pass it through to the renderer.
 			// http://youtu.be/7pe1xYzFCvA
-			c.Transform(pCharacter->m_mTransform);
+			c.Transform(pCharacter->GetGlobalTransform());
 
 			// Render the player-box
 			c.RenderBox(pCharacter->m_aabbSize.vecMin, pCharacter->m_aabbSize.vecMax);
@@ -522,8 +523,8 @@ void MergeSortRenderSubList(std::vector<CCharacter*>& apRenderList, size_t iStar
 	else if (iLength == 2)
 	{
 		// We are in a base case of two items. If the first one is bigger than the second, swap them.
-		float flLeftDistanceSqr = (apRenderList[iStart]->m_mTransform.GetTranslation() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
-		float flRightDistanceSqr = (apRenderList[iStart+1]->m_mTransform.GetTranslation() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
+		float flLeftDistanceSqr = (apRenderList[iStart]->GetGlobalOrigin() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
+		float flRightDistanceSqr = (apRenderList[iStart+1]->GetGlobalOrigin() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
 
 		// We can compare square distances just like regular distances, and they're faster to calculate. http://www.youtube.com/watch?v=DxmGxkhhluU
 		if (flLeftDistanceSqr > flRightDistanceSqr)
@@ -549,10 +550,10 @@ void MergeSortRenderSubList(std::vector<CCharacter*>& apRenderList, size_t iStar
 	size_t iOutput = iStart;
 	while (true)
 	{
-		float flLeftDistanceSqr = (apRenderListCopy[iLeft]->m_mTransform.GetTranslation() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
+		float flLeftDistanceSqr = (apRenderListCopy[iLeft]->GetGlobalOrigin() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
 		float flRightDistanceSqr = 0;
 		if (iRight != iEnd)
-			flRightDistanceSqr = (apRenderListCopy[iRight]->m_mTransform.GetTranslation() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
+			flRightDistanceSqr = (apRenderListCopy[iRight]->GetGlobalOrigin() - Game()->GetRenderer()->GetCameraPosition()).LengthSqr();
 
 		// We can compare square distances just like regular distances, and they're faster to calculate. http://www.youtube.com/watch?v=DxmGxkhhluU
 		bool bUseLeft = flLeftDistanceSqr < flRightDistanceSqr;
@@ -585,7 +586,7 @@ void CGame::GameLoop()
 	m_hPlayer = CreateCharacter();
 
 	// Initialize the box's position etc
-	m_hPlayer->m_mTransform.SetTranslation(Point(0, 0, 0));
+	m_hPlayer->SetGlobalOrigin(Point(0, 0, 0));
 	m_hPlayer->m_vecMovement = Vector(0, 0, 0);
 	m_hPlayer->m_vecMovementGoal = Vector(0, 0, 0);
 	m_hPlayer->m_vecVelocity = Vector(0, 0, 0);
@@ -607,6 +608,8 @@ void CGame::GameLoop()
 	m_hToyBox->m_aabbSize.vecMin = Vector(-.5f, 0, -.5f);
 	m_hToyBox->m_aabbSize.vecMax = Vector(.5f, 1, .5f);
 	m_hToyBox->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+
+	m_hToyBox->SetMoveParent(m_hMerryGoRound);
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);
