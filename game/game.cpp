@@ -297,28 +297,28 @@ void CGame::Update(float dt)
 		pCharacter->SetTranslation(pCharacter->m_mTransform.GetTranslation() + pCharacter->m_vecVelocity * dt);
 	}
 
-	float flTime = TriangleWave(Game()->GetTime(), 5); // Every 5 seconds we'll start over again.
-	float t = RemapClamp(flTime, 0.2f, 0.8f, 0, 1);    // Leave some space at the start and end where they stand still
+	// The easy way to do it. We're going to do it the hard way!
+	//m_hMerryGoRound->SetRotation(EAngle(0, Game()->GetTime() * 20, 0));
 
-	// These two should be equivalent rotations:
-	EAngle angStart(0, 90, 0);
-	Quaternion qStart(Vector(0, 1, 0), 90);
+	// How much do we want to spin the merry go round? http://www.youtube.com/watch?v=6HaDoXWPICQ
+	Matrix4x4 mSpin;
+	mSpin.SetRotation(dt * 50, Vector(0, 1, 0));
 
-	// These two should be equivalent rotations:
-	EAngle angEnd(90, 0, 90);
-	Quaternion qEnd = Quaternion(Vector(0, 0, 1), 90) * Quaternion(Vector(1, 0, 0), 90);
+	// The location of the merry go round. http://www.youtube.com/watch?v=iCazI3nKBf0
+	Matrix4x4 mTranslation;
+	mTranslation.SetTranslation(m_hMerryGoRound->m_mTransform.GetTranslation());
 
-	// I'm converting the Eulers to Vectors so that I can do a 'slerp' on them.
-	// I'm not creating operator overloads for EAngle since we really shouldn't
-	// be doing this operation on them anyways.
-	Vector vecStart(angStart.p, angStart.y, angStart.r);
-	Vector vecEnd(angEnd.p, angEnd.y, angEnd.r);
-	Vector vecCurrent = vecStart + (vecEnd - vecStart) * t; // Here's the 'slerp'
-	EAngle angCurrent(vecCurrent.x, vecCurrent.y, vecCurrent.z);
+	// The rotation of the merry go round will be the transform matrix, with the translation part zeroed out.
+	Matrix4x4 mRotation = m_hMerryGoRound->m_mTransform;
+	mRotation.SetTranslation(Vector(0, 0, 0));
 
-	// Set the two objects to their respective rotations and we'll see which one works better!
-	m_hPropEuler->SetRotation(angCurrent);
-	m_hPropQuaternion->SetRotation(qStart.Slerp(qEnd, t));
+	// Spin the merry go round and the object on it. http://youtu.be/QRhSOMd30IM
+	Matrix4x4 mNewMGRTransform = mTranslation * mSpin * mRotation;
+	Matrix4x4 mNewToyBoxTransform = m_hMerryGoRound->m_mTransform * mSpin
+		* m_hMerryGoRound->m_mTransform.InvertedTR() * m_hToyBox->m_mTransform;
+
+	m_hMerryGoRound->m_mTransform = mNewMGRTransform;
+	m_hToyBox->m_mTransform = mNewToyBoxTransform;
 }
 
 void CGame::Draw()
@@ -596,17 +596,17 @@ void CGame::GameLoop()
 	m_hPlayer->m_aabbSize = AABB(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
 	m_hPlayer->m_bTakesDamage = true;
 
-	m_hPropEuler = CreateCharacter();
-	m_hPropEuler->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(0, 3, 4));
-	m_hPropEuler->m_aabbSize.vecMin = Vector(-1, -1, -1);
-	m_hPropEuler->m_aabbSize.vecMax = Vector(1, 1, 1);
-	m_hPropEuler->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	m_hMerryGoRound = CreateCharacter();
+	m_hMerryGoRound->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(-6, 0, -6));
+	m_hMerryGoRound->m_aabbSize.vecMin = Vector(-4, -.1f, -4);
+	m_hMerryGoRound->m_aabbSize.vecMax = Vector(4, .1f, 4);
+	m_hMerryGoRound->m_clrRender = Color(0.4f, 0.2f, 0.8f, 1.0f);
 
-	m_hPropQuaternion = CreateCharacter();
-	m_hPropQuaternion->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(0, 3, -4));
-	m_hPropQuaternion->m_aabbSize.vecMin = Vector(-1, -1, -1);
-	m_hPropQuaternion->m_aabbSize.vecMax = Vector(1, 1, 1);
-	m_hPropQuaternion->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	m_hToyBox = CreateCharacter();
+	m_hToyBox->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(-7, 0, -7));
+	m_hToyBox->m_aabbSize.vecMin = Vector(-.5f, 0, -.5f);
+	m_hToyBox->m_aabbSize.vecMax = Vector(.5f, 1, .5f);
+	m_hToyBox->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);

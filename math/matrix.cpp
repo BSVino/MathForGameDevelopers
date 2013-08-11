@@ -25,18 +25,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #define M_PI 3.14159265358979323846f
 #endif
 
-// Keeping the cross product here until we learn about it, then it will go back into the Vector class.
-Vector CrossProduct(const Vector& a, const Vector& b)
-{
-	Vector r;
-
-	r.x = a.y*b.z - a.z*b.y;
-	r.y = a.z*b.x - a.x*b.z;
-	r.z = a.x*b.y - a.y*b.x;
-
-	return r;
-}
-
 Matrix4x4::Matrix4x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33)
 {
 	Init(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33);
@@ -322,8 +310,8 @@ Matrix4x4 Matrix4x4::ConstructCameraView(const Vector& vecPosition, const Vector
 {
 	TAssert(fabs(vecDirection.LengthSqr()-1) < 0.0001f);
 
-	Vector vecCamRight = CrossProduct(vecDirection, vecUp).Normalized();
-	Vector vecCamUp = CrossProduct(vecCamRight, vecDirection);
+	Vector vecCamRight = vecDirection.Cross(vecUp).Normalized();
+	Vector vecCamUp = vecCamRight.Cross(vecDirection);
 
 	// OpenGL wants to be looking down the -Z axis. So, pass -vecDirection into the Z position.
 	// Then invert the matrix because we're going from global space into local camera space.
