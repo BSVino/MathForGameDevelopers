@@ -434,6 +434,7 @@ Vector Matrix4x4::GetScale() const
 	return vecReturn;
 }
 
+// Used for vectors which represent a position.
 Vector Matrix4x4::operator*(const Vector& v) const
 {
 	// [a b c x][X] 
@@ -448,7 +449,8 @@ Vector Matrix4x4::operator*(const Vector& v) const
 	return vecResult;
 }
 
-Vector Matrix4x4::TransformVector(const Vector& v) const
+// Used for vectors which represent a direction. http://youtu.be/B6d97neDPBk
+Vector Matrix4x4::TransformDirection(const Vector& v) const
 {
 	// [a b c][X] 
 	// [d e f][Y] = [aX+bY+cZ dX+eY+fZ gX+hY+iZ]
@@ -551,4 +553,23 @@ Matrix4x4 Matrix4x4::InvertedTR() const
 float Matrix4x4::Trace() const
 {
 	return m[0][0] + m[1][1] + m[2][2];
+}
+
+// Since we're mucking around with matrices so much, the basis vectors can
+// sometimes get slightly longer or shorter than unit length because of
+// floating point precision problems. This function re-normalizes the basis
+// vectors to make sure we always have a valid matrix where all basis vectors
+// are unit length and orthogonal. Only call it if you're using a TR matrix
+// and if you're not worried about a performance penalty.
+void Matrix4x4::NormalizeTR()
+{
+	// Keep the forward vector, just make sure it's normal length.
+	SetForwardVector(GetForwardVector().Normalized());
+
+	// The up vector is the second most important vector to keep right.
+	// Do a cross-product to re-calculate it using the forward and right vectors.
+	SetUpVector(GetForwardVector().Cross(-GetRightVector()).Normalized());
+
+	// Finally, re-calculate the right vector.
+	SetRightVector(GetForwardVector().Cross(GetUpVector()).Normalized());
 }

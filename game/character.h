@@ -53,6 +53,10 @@ public:
 	const Vector GetGlobalOrigin() const;
 	void         SetGlobalOrigin(const Vector& vecOrigin);
 
+	const EAngle GetLocalView() const;
+	void         SetLocalView(const EAngle& angView);
+	const Vector GetGlobalView() const;
+
 private:
 	void BuildTransform();
 
@@ -69,7 +73,6 @@ public:
 	Vector    m_vecMovementGoal;
 	Vector    m_vecVelocity;
 	Vector    m_vecGravity;
-	EAngle    m_angView;
 	float     m_flSpeed;
 	AABB      m_aabbSize;
 	Color     m_clrRender;
@@ -89,5 +92,6 @@ private:
 	Matrix4x4 m_mGlobalTransform;
 	Matrix4x4 m_mLocalTransform;
 	CHandle   m_hMoveParent;
+	EAngle    m_angView;
 };
 

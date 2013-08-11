@@ -128,19 +128,31 @@ void CCharacter::SetMoveParent(CCharacter* pParent)
 		return;
 
 	if (m_hMoveParent.Get())
+	{
 		// We're either setting to a different parent or setting to null.
 		// If we already have a move parent then we need to calculate the global transform.
 		// Good thing we have a handy function for that.
 		m_mGlobalTransform = GetGlobalTransform();
+
+		// The view should be transformed into global as well.
+		m_angView = GetGlobalView();
+	}
 
 	m_hMoveParent = pParent;
 
 	if (!pParent)
 		return;
 
+	Matrix4x4 mParentInverse = m_hMoveParent->GetGlobalTransform().InvertedTR();
+
 	// The local transform can be calculated by moving the
 	// global coordinates into the move parent local space.
-	m_mLocalTransform = m_hMoveParent->GetGlobalTransform().InvertedTR() * m_mGlobalTransform;
+	m_mLocalTransform = mParentInverse * m_mGlobalTransform;
+
+	// The view should be transformed into local as well. We use a different
+	// function to make sure we don't get the translation part in our direction
+	// vector. http://youtu.be/B6d97neDPBk
+	m_angView = mParentInverse.TransformDirection(m_angView.ToVector());
 }
 
 const Matrix4x4 CCharacter::GetGlobalTransform() const
@@ -182,4 +194,25 @@ void CCharacter::SetGlobalOrigin(const Vector& vecOrigin)
 	}
 
 	m_mGlobalTransform.SetTranslation(vecOrigin);
+}
+
+const EAngle CCharacter::GetLocalView() const
+{
+	return m_angView;
+}
+
+void CCharacter::SetLocalView(const EAngle& angView)
+{
+	m_angView = angView;
+}
+
+const Vector CCharacter::GetGlobalView() const
+{
+	if (m_hMoveParent.Get())
+		// Calculate the global view on the fly. We use a different transform
+		// function because this is a direction vector, not a position vector.
+		// http://youtu.be/B6d97neDPBk
+		return m_hMoveParent->GetGlobalTransform().TransformDirection(m_angView.ToVector());
+
+	return m_angView.ToVector();
 }

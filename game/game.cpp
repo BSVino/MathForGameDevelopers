@@ -142,10 +142,13 @@ void CGame::MouseMotion(int x, int y)
 
 	float flSensitivity = 0.3f;
 
-	m_hPlayer->m_angView.p += iMouseMovedY*flSensitivity;
-	m_hPlayer->m_angView.y += iMouseMovedX*flSensitivity;
+	EAngle angView = m_hPlayer->GetLocalView();
 
-	m_hPlayer->m_angView.Normalize();
+	angView.p += iMouseMovedY*flSensitivity;
+	angView.y += iMouseMovedX*flSensitivity;
+	angView.Normalize();
+
+	m_hPlayer->SetLocalView(angView);
 
 	m_iLastMouseX = x;
 	m_iLastMouseY = y;
@@ -156,7 +159,7 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 	if (iButton == TINKER_KEY_MOUSE_LEFT && iState == TINKER_MOUSE_PRESSED)
 	{
 		Vector v0 = m_hPlayer->GetGlobalOrigin() + Vector(0, 1, 0);
-		Vector v1 = m_hPlayer->GetGlobalOrigin() + Vector(0, 1, 0) + m_hPlayer->m_angView.ToVector() * 100;
+		Vector v1 = m_hPlayer->GetGlobalOrigin() + Vector(0, 1, 0) + m_hPlayer->GetGlobalView() * 100;
 
 		Vector vecIntersection;
 		CCharacter* pHit = nullptr;
@@ -237,7 +240,7 @@ void CGame::Update(float dt)
 	m_hPlayer->m_vecMovement.x = Approach(m_hPlayer->m_vecMovementGoal.x, m_hPlayer->m_vecMovement.x, dt * 65);
 	m_hPlayer->m_vecMovement.z = Approach(m_hPlayer->m_vecMovementGoal.z, m_hPlayer->m_vecMovement.z, dt * 65);
 
-	Vector vecForward = m_hPlayer->m_angView.ToVector();
+	Vector vecForward = m_hPlayer->GetGlobalView();
 	vecForward.y = 0;
 	vecForward.Normalize();
 
@@ -265,7 +268,7 @@ void CGame::Update(float dt)
 	mPlayerTranslation.SetTranslation(vecPosition);
 
 	// Create a set of basis vectors that do what we need.
-	vecForward = m_hPlayer->m_angView.ToVector(); // Euler angles: https://www.youtube.com/watch?v=zZM2uUkEoFw
+	vecForward = m_hPlayer->GetGlobalView();
 	vecForward.y = 0;       // Flatten the angles so that the box doesn't rotate up and down as the player does.
 	vecForward.Normalize(); // Re-normalize, we need all of our basis vectors to be normal vectors (unit-length)
 	vecUp = Vector(0, 1, 0);  // The global up vector
@@ -319,12 +322,16 @@ void CGame::Update(float dt)
 	// Spin the merry go round. http://youtu.be/uX3BVzT3jaw
 	Matrix4x4 mNewMGRTransform = mTranslation * mSpin * mRotation;
 
+	// Floating point precision problems can make our matrix slowy become invalid.
+	// This function will tweak it right again. See its comments for more info.
+	mNewMGRTransform.NormalizeTR();
+
 	m_hMerryGoRound->SetGlobalTransform(mNewMGRTransform);
 }
 
 void CGame::Draw()
 {
-	Vector vecForward = m_hPlayer->m_angView.ToVector();
+	Vector vecForward = m_hPlayer->GetGlobalView();
 	Vector vecUp(0, 1, 0);
 
 	// Cross-product http://www.youtube.com/watch?v=FT7MShdqK6w

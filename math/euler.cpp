@@ -22,6 +22,15 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <cmath>
 
+// Converts a direction vector into an euler angle, assuming up (0, 1, 0)
+EAngle::EAngle(const Vector& vecDirection)
+{
+	p = atan2(vecDirection.y, sqrt(vecDirection.x*vecDirection.x + vecDirection.z*vecDirection.z)) * (float)(180/M_PI);
+	y = (float)atan2(vecDirection.z, vecDirection.x) * (float)(180/M_PI);
+	r = 0;
+}
+
+// Convert euler angles to a vector: https://www.youtube.com/watch?v=zZM2uUkEoFw
 Vector EAngle::ToVector() const
 {
 	Vector result;

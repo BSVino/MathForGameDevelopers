@@ -34,6 +34,8 @@ public:
 		r = roll;
 	}
 
+	EAngle(const Vector& vecDirection);
+
 public:
 	Vector ToVector() const;
 	void ToAxisAngle(Vector& vecAxis, float& flAngle) const;

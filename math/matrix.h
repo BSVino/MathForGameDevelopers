@@ -97,11 +97,13 @@ public:
 	Vector		GetTranslation() const;
 	Vector      GetScale() const;
 
-	// Transform a vector
+	// Transform a position vector
 	Vector		operator*(const Vector& v) const;
-	Vector		TransformVector(const Vector& v) const;		// Same as homogenous vector with w=0 transform, no translation.
-															// You want to use this for directional vectors such as normals and velocities because translations will change their length.
-															// It's not immune to scaling though! A matrix with scaling will output a vector of different length than the input.
+
+	// Same as homogenous vector with w=0 transform, no translation.
+	// You want to use this for directional vectors such as normals and velocities because translations will change their length.
+	// It's not immune to scaling though! A matrix with scaling will output a vector of different length than the input.
+	Vector		TransformDirection(const Vector& v) const;
 
 	Vector4D	operator*(const Vector4D& v) const;
 
@@ -121,6 +123,8 @@ public:
 	Matrix4x4	InvertedTR() const;
 
 	float		Trace() const;
+
+	void        NormalizeTR();
 
 	operator float*()
 	{
