@@ -245,6 +245,8 @@ void Matrix4x4::SetReflection(const Vector& vecPlane)
 	m[1][2] = m[2][1] = -2 * vecPlane.y * vecPlane.z;
 }
 
+// Create a perspective projection matrix.
+// http://youtu.be/dul0mui292Q
 Matrix4x4 Matrix4x4::ProjectPerspective(float flFOV, float flAspectRatio, float flNear, float flFar)
 {
 	float flTanThetaOver2 = tan(flFOV * (float)M_PI / 360);
@@ -253,11 +255,18 @@ Matrix4x4 Matrix4x4::ProjectPerspective(float flFOV, float flAspectRatio, float 
 
 	m.Identity();
 
+	// X and Y scaling
 	m.m[0][0] = 1/flTanThetaOver2;
 	m.m[1][1] = flAspectRatio/flTanThetaOver2;
+
+	// Z coordinate makes z -1 when we're on the near plane and +1 on the far plane
 	m.m[2][2] = (flNear + flFar)/(flNear - flFar);
 	m.m[3][2] = 2 * flNear * flFar / (flNear - flFar);
+
+	// W = -1 so that we have [x y z -z], a homogenous vector that becomes [-x/z -y/z -1] after division by w.
 	m.m[2][3] = -1;
+
+	// Must zero this out, the identity has it as 1.
 	m.m[3][3] = 0;
 
 	return m;
