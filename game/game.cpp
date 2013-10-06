@@ -299,34 +299,6 @@ void CGame::Update(float dt)
 
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
-
-	// This is a distance-squared comparison, much faster than a normal distance comparison.
-	float flMerryGoRoundSize = m_hMerryGoRound->m_aabbSize.GetRadius();
-	if ((m_hPlayer->GetGlobalOrigin() - m_hMerryGoRound->GetGlobalOrigin()).LengthSqr() < flMerryGoRoundSize*flMerryGoRoundSize)
-		m_hPlayer->SetMoveParent(m_hMerryGoRound);
-	else
-		m_hPlayer->SetMoveParent(nullptr);
-
-	// How much do we want to spin the merry go round? http://www.youtube.com/watch?v=6HaDoXWPICQ
-	Matrix4x4 mSpin;
-	mSpin.SetRotation(dt * 50, Vector(0, 1, 0));
-
-	// The location of the merry go round. http://www.youtube.com/watch?v=iCazI3nKBf0
-	Matrix4x4 mTranslation;
-	mTranslation.SetTranslation(m_hMerryGoRound->GetGlobalOrigin());
-
-	// The rotation of the merry go round will be the transform matrix, with the translation part zeroed out.
-	Matrix4x4 mRotation = m_hMerryGoRound->GetGlobalTransform();
-	mRotation.SetTranslation(Vector(0, 0, 0));
-
-	// Spin the merry go round. http://youtu.be/uX3BVzT3jaw
-	Matrix4x4 mNewMGRTransform = mTranslation * mSpin * mRotation;
-
-	// Floating point precision problems can make our matrix slowy become invalid.
-	// This function will tweak it right again. See its comments for more info.
-	mNewMGRTransform.NormalizeTR();
-
-	m_hMerryGoRound->SetGlobalTransform(mNewMGRTransform);
 }
 
 void CGame::Draw()
@@ -340,7 +312,7 @@ void CGame::Draw()
 	CRenderer* pRenderer = GetRenderer();
 
 	// Tell the renderer how to set up the camera.
-	pRenderer->SetCameraPosition(m_hPlayer->GetGlobalOrigin() - vecForward * 3 + vecUp * 3 - vecRight * 1.5f);
+	pRenderer->SetCameraPosition(m_hPlayer->GetGlobalOrigin() - vecForward * 6 + vecUp * 3 - vecRight * 0.5f);
 	pRenderer->SetCameraDirection(vecForward);
 	pRenderer->SetCameraUp(Vector(0, 1, 0));
 	pRenderer->SetCameraFOV(90);
@@ -407,6 +379,25 @@ void CGame::Draw()
 
 	// Draw all opaque characters first.
 	DrawCharacters(m_apRenderOpaqueList, false);
+
+	for (size_t i = 0; i < MAX_CHARACTERS; i++)
+	{
+		CCharacter* pCharacter = GetCharacterIndex(i);
+		if (!pCharacter)
+			continue;
+
+		if (!pCharacter->m_bEnemyAI)
+			continue;
+
+		float flRadius = 3.5f;
+
+		Vector vecIndicatorOrigin = NearestPointOnSphere(m_hPlayer->GetGlobalOrigin(), flRadius, pCharacter->GetGlobalOrigin());
+
+		float flBoxSize = 0.1f;
+
+		r.SetUniform("vecColor", Color(255, 0, 0, 255));
+		r.RenderBox(vecIndicatorOrigin - Vector(1, 1, 1)*flBoxSize, vecIndicatorOrigin + Vector(1, 1, 1)*flBoxSize);
+	}
 
 	// Sort the transparent render list so that we paint the items farther from the camera first. http://youtu.be/fEjZrwDKdi8
 	MergeSortTransparentRenderList();
@@ -604,19 +595,32 @@ void CGame::GameLoop()
 	m_hPlayer->m_aabbSize = AABB(-Vector(0.5f, 0, 0.5f), Vector(0.5f, 2, 0.5f));
 	m_hPlayer->m_bTakesDamage = true;
 
-	m_hMerryGoRound = CreateCharacter();
-	m_hMerryGoRound->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(-6, 0, -6));
-	m_hMerryGoRound->m_aabbSize.vecMin = Vector(-4, -.1f, -4);
-	m_hMerryGoRound->m_aabbSize.vecMax = Vector(4, .1f, 4);
-	m_hMerryGoRound->m_clrRender = Color(0.4f, 0.2f, 0.8f, 1.0f);
+	Vector vecMonsterMin = Vector(-1, 0, -1);
+	Vector vecMonsterMax = Vector(1, 2, 1);
 
-	m_hToyBox = CreateCharacter();
-	m_hToyBox->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(-7, 0, -7));
-	m_hToyBox->m_aabbSize.vecMin = Vector(-.5f, 0, -.5f);
-	m_hToyBox->m_aabbSize.vecMax = Vector(.5f, 1, .5f);
-	m_hToyBox->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	CCharacter* pTarget1 = CreateCharacter();
+	pTarget1->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, 6));
+	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
+	pTarget1->m_aabbSize.vecMax = vecMonsterMax;
+	pTarget1->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget1->m_bEnemyAI = true;
+	pTarget1->m_bTakesDamage = true;
 
-	m_hToyBox->SetMoveParent(m_hMerryGoRound);
+	CCharacter* pTarget2 = CreateCharacter();
+	pTarget2->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, -6));
+	pTarget2->m_aabbSize.vecMin = vecMonsterMin;
+	pTarget2->m_aabbSize.vecMax = vecMonsterMax;
+	pTarget2->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget2->m_bEnemyAI = true;
+	pTarget2->m_bTakesDamage = true;
+
+	CCharacter* pTarget3 = CreateCharacter();
+	pTarget3->SetTransform(Vector(3, 3, 3), 0, Vector(0, 1, 0), Vector(-6, 0, 8));
+	pTarget3->m_aabbSize.vecMin = vecMonsterMin;
+	pTarget3->m_aabbSize.vecMax = vecMonsterMax;
+	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
+	pTarget3->m_bEnemyAI = true;
+	pTarget3->m_bTakesDamage = true;
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);

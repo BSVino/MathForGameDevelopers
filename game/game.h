@@ -104,9 +104,6 @@ private:
 
 	// This is the player character
 	CHandle m_hPlayer;
-
-	CHandle m_hMerryGoRound;
-	CHandle m_hToyBox;
 };
 
 inline CGame* Game()

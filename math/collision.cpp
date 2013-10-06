@@ -103,3 +103,11 @@ bool LinePlaneIntersection(const Vector& n, const Vector& c, const Vector& x0, c
 
 	return k >= 0 && k <= 1;
 }
+
+const Vector NearestPointOnSphere(const Vector& a, float r, const Vector& m)
+{
+	Vector am = m - a;
+	Vector v = am.Normalized();
+
+	return a + v * r;
+}

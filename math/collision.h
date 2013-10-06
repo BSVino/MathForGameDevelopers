@@ -27,3 +27,8 @@ bool LineAABBIntersection(const AABB& aabbBox, const Vector& v0, const Vector& v
 // x0 - the beginning of our line
 // x1 - the end of our line
 bool LinePlaneIntersection(const Vector& n, const Vector& c, const Vector& x0, const Vector& x1, Vector& vecIntersection, float& flFraction);
+
+// c - sphere center
+// r - sphere radius
+// p - test point
+const Vector NearestPointOnSphere(const Vector& c, float r, const Vector& p);
