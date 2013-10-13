@@ -84,6 +84,20 @@ bool LineAABBIntersection(const AABB& aabbBox, const Vector& v0, const Vector& v
 	return true;
 }
 
+// Find the intersection of two axis-aligned bounding boxes http://youtu.be/ENuk9HgeTiI
+bool AABBIntersection(const AABB& a, const AABB& b)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (a.vecMin.v[i] > b.vecMax.v[i])
+			return false;
+		if (a.vecMax.v[i] < b.vecMin.v[i])
+			return false;
+	}
+
+	return true;
+}
+
 // Line-Plane Intersection: http://youtu.be/fIu_8b2n8ZM
 bool LinePlaneIntersection(const Vector& n, const Vector& c, const Vector& x0, const Vector& x1, Vector& vecIntersection, float& flFraction)
 {

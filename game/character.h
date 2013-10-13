@@ -57,6 +57,8 @@ public:
 	void         SetLocalView(const EAngle& angView);
 	const Vector GetGlobalView() const;
 
+	const AABB   GetGlobalAABB() const;
+
 private:
 	void BuildTransform();
 

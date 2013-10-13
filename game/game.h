@@ -104,6 +104,7 @@ private:
 
 	// This is the player character
 	CHandle m_hPlayer;
+	CHandle m_hTrigger;
 };
 
 inline CGame* Game()

@@ -299,6 +299,11 @@ void CGame::Update(float dt)
 
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
+
+	if (AABBIntersection(m_hTrigger->GetGlobalAABB(), m_hPlayer->GetGlobalAABB()))
+		m_hPlayer->m_clrRender = Color(1.0f, 0.2f, 0.1f, 1.0f);
+	else
+		m_hPlayer->m_clrRender = Color(0.4f, 0.2f, 0.8f, 1.0f);
 }
 
 void CGame::Draw()
@@ -500,6 +505,12 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 			// http://youtu.be/7pe1xYzFCvA
 			c.Transform(pCharacter->GetGlobalTransform());
 
+			if (pCharacter->m_bDrawTransparent)
+			{
+				c.SetAlpha(0.6f);
+				c.SetBlend(BLEND_ALPHA);
+			}
+
 			// Render the player-box
 			c.RenderBox(pCharacter->m_aabbSize.vecMin, pCharacter->m_aabbSize.vecMax);
 		}
@@ -598,7 +609,7 @@ void CGame::GameLoop()
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
-	CCharacter* pTarget1 = CreateCharacter();
+	/*CCharacter* pTarget1 = CreateCharacter();
 	pTarget1->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, 6));
 	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget1->m_aabbSize.vecMax = vecMonsterMax;
@@ -620,7 +631,7 @@ void CGame::GameLoop()
 	pTarget3->m_aabbSize.vecMax = vecMonsterMax;
 	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
 	pTarget3->m_bEnemyAI = true;
-	pTarget3->m_bTakesDamage = true;
+	pTarget3->m_bTakesDamage = true;*/
 
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);
@@ -648,6 +659,13 @@ void CGame::GameLoop()
 	pProp4->m_aabbSize.vecMin = vecPropMin;
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+
+	m_hTrigger = CreateCharacter();
+	m_hTrigger->SetTransform(Vector(10, 2, 4), 0, Vector(0, 1, 0), Vector(0, 0, -14));
+	m_hTrigger->m_aabbSize.vecMin = vecPropMin;
+	m_hTrigger->m_aabbSize.vecMax = vecPropMax;
+	m_hTrigger->m_bDrawTransparent = true;
+	m_hTrigger->m_clrRender = Color(0.8f, 0.4f, 0.2f, 0.5f);
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();

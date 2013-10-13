@@ -28,6 +28,7 @@ CCharacter::CCharacter()
 	m_bEnemyAI = false;
 	m_flRotationTheta = 0;
 	m_vecRotationAxis = Vector(0, 1, 0);
+	m_vecScaling = Vector(1, 1, 1);
 	m_bTakesDamage = false;
 	m_bDrawTransparent = false;
 	m_iHealth = 3;
@@ -215,4 +216,9 @@ const Vector CCharacter::GetGlobalView() const
 		return m_hMoveParent->GetGlobalTransform().TransformDirection(m_angView.ToVector());
 
 	return m_angView.ToVector();
+}
+
+const AABB CCharacter::GetGlobalAABB() const
+{
+	return m_aabbSize * m_vecScaling + GetGlobalOrigin();
 }
