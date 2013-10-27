@@ -299,11 +299,6 @@ void CGame::Update(float dt)
 
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
-
-	if (AABBIntersection(m_hTrigger->GetGlobalAABB(), m_hPlayer->GetGlobalAABB()))
-		m_hPlayer->m_clrRender = Color(1.0f, 0.2f, 0.1f, 1.0f);
-	else
-		m_hPlayer->m_clrRender = Color(0.4f, 0.2f, 0.8f, 1.0f);
 }
 
 void CGame::Draw()
@@ -355,6 +350,26 @@ void CGame::Draw()
 		r.Vertex(Vector(30, 0, 30));
 		r.Vertex(Vector(30, 0, -30));
 	r.EndRender();
+
+	// Create an array of vectors to store our triangles.
+	Vector avecPoints[6];
+
+	// First triangle.
+	avecPoints[0] = Vector(1, 1, 0);
+	avecPoints[1] = Vector(0, 1, 0);
+	avecPoints[2] = Vector(1, 0, 0);
+
+	// Second triangle.
+	avecPoints[3] = Vector(1, 0, 0);
+	avecPoints[4] = Vector(0, 1, 0);
+	avecPoints[5] = Vector(0, 0, 0);
+
+	r.SetUniform("vecColor", Vector4D(0.9f, 0.4f, 0.2f, 1));
+
+	// Render the triangles.
+	r.BeginRenderVertexArray();
+	r.SetPositionBuffer(&avecPoints[0].x);
+	r.EndRenderVertexArray(6);
 
 	// Prepare a list of entities to render.
 	m_apRenderOpaqueList.clear();
@@ -659,13 +674,6 @@ void CGame::GameLoop()
 	pProp4->m_aabbSize.vecMin = vecPropMin;
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-
-	m_hTrigger = CreateCharacter();
-	m_hTrigger->SetTransform(Vector(10, 2, 4), 0, Vector(0, 1, 0), Vector(0, 0, -14));
-	m_hTrigger->m_aabbSize.vecMin = vecPropMin;
-	m_hTrigger->m_aabbSize.vecMax = vecPropMax;
-	m_hTrigger->m_bDrawTransparent = true;
-	m_hTrigger->m_clrRender = Color(0.8f, 0.4f, 0.2f, 0.5f);
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
