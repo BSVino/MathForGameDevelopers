@@ -106,6 +106,7 @@ private:
 	CHandle m_hPlayer;
 
 	size_t m_iBillboardVB;
+	size_t m_iBillboardIB;
 };
 
 inline CGame* Game()

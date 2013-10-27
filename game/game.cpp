@@ -356,7 +356,7 @@ void CGame::Draw()
 	// Render the triangles.
 	r.BeginRenderVertexArray(m_iBillboardVB);
 	r.SetPositionBuffer(0);
-	r.EndRenderVertexArray(6);
+	r.EndRenderVertexArrayIndexed(m_iBillboardIB, 6);
 
 	// Prepare a list of entities to render.
 	m_apRenderOpaqueList.clear();
@@ -662,22 +662,31 @@ void CGame::GameLoop()
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 
-	// Create an array of vectors to store our triangles.
+	// Create an array of vectors to store our vertexes.
 	vector<Vector> avecPoints;
 
-	// First triangle.
-	avecPoints.push_back(Vector(1, 1, 0));
-	avecPoints.push_back(Vector(0, 1, 0));
-	avecPoints.push_back(Vector(1, 0, 0));
+	avecPoints.push_back(Vector(1, 1, 0)); // A
+	avecPoints.push_back(Vector(0, 1, 0)); // B
+	avecPoints.push_back(Vector(0, 0, 0)); // C
+	avecPoints.push_back(Vector(1, 0, 0)); // D
 
-	// Second triangle.
-	avecPoints.push_back(Vector(1, 0, 0));
-	avecPoints.push_back(Vector(0, 1, 0));
-	avecPoints.push_back(Vector(0, 0, 0));
+	vector<unsigned int> aiIndices;
+
+	// First triangle
+	aiIndices.push_back(3);
+	aiIndices.push_back(0);
+	aiIndices.push_back(1);
+
+	// Second triangle
+	aiIndices.push_back(3);
+	aiIndices.push_back(1);
+	aiIndices.push_back(2);
 
 	m_iBillboardVB = CRenderer::LoadVertexDataIntoGL(avecPoints.size() * sizeof(Vector), &avecPoints[0].x);
+	m_iBillboardIB = CRenderer::LoadIndexDataIntoGL(aiIndices.size() * sizeof(unsigned int), &aiIndices[0]);
 
 	avecPoints.clear();
+	aiIndices.clear();
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
