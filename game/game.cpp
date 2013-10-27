@@ -351,24 +351,11 @@ void CGame::Draw()
 		r.Vertex(Vector(30, 0, -30));
 	r.EndRender();
 
-	// Create an array of vectors to store our triangles.
-	Vector avecPoints[6];
-
-	// First triangle.
-	avecPoints[0] = Vector(1, 1, 0);
-	avecPoints[1] = Vector(0, 1, 0);
-	avecPoints[2] = Vector(1, 0, 0);
-
-	// Second triangle.
-	avecPoints[3] = Vector(1, 0, 0);
-	avecPoints[4] = Vector(0, 1, 0);
-	avecPoints[5] = Vector(0, 0, 0);
-
 	r.SetUniform("vecColor", Vector4D(0.9f, 0.4f, 0.2f, 1));
 
 	// Render the triangles.
-	r.BeginRenderVertexArray();
-	r.SetPositionBuffer(&avecPoints[0].x);
+	r.BeginRenderVertexArray(m_iBillboardVB);
+	r.SetPositionBuffer(0);
 	r.EndRenderVertexArray(6);
 
 	// Prepare a list of entities to render.
@@ -674,6 +661,23 @@ void CGame::GameLoop()
 	pProp4->m_aabbSize.vecMin = vecPropMin;
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+
+	// Create an array of vectors to store our triangles.
+	vector<Vector> avecPoints;
+
+	// First triangle.
+	avecPoints.push_back(Vector(1, 1, 0));
+	avecPoints.push_back(Vector(0, 1, 0));
+	avecPoints.push_back(Vector(1, 0, 0));
+
+	// Second triangle.
+	avecPoints.push_back(Vector(1, 0, 0));
+	avecPoints.push_back(Vector(0, 1, 0));
+	avecPoints.push_back(Vector(0, 0, 0));
+
+	m_iBillboardVB = CRenderer::LoadVertexDataIntoGL(avecPoints.size() * sizeof(Vector), &avecPoints[0].x);
+
+	avecPoints.clear();
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();
