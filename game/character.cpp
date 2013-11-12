@@ -24,6 +24,7 @@ CCharacter::CCharacter()
 	m_flShotTime = -1;
 	m_bHitByTraces = true;
 	m_clrRender = Color(255, 255, 255, 255);
+	m_iTexture = 0;
 	m_iBillboardTexture = 0;
 	m_bEnemyAI = false;
 	m_flRotationTheta = 0;

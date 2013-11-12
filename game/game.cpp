@@ -42,6 +42,7 @@ CGame::CGame(int argc, char** argv)
 void CGame::Load()
 {
 	m_iMonsterTexture = GetRenderer()->LoadTextureIntoGL("monster.png");
+	m_iCrateTexture = GetRenderer()->LoadTextureIntoGL("crate.png");
 }
 
 void CGame::MakePuff(const Point& p)
@@ -351,12 +352,21 @@ void CGame::Draw()
 		r.Vertex(Vector(30, 0, -30));
 	r.EndRender();
 
-	r.SetUniform("vecColor", Vector4D(0.9f, 0.4f, 0.2f, 1));
+	r.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
+
+	r.SetUniform("bDiffuse", true);
+	r.BindTexture(m_iCrateTexture);
+
+	r.Scale(4, 4, 4);
 
 	// Render the triangles.
 	r.BeginRenderVertexArray(m_iBillboardVB);
-	r.SetPositionBuffer(0);
+	r.SetPositionBuffer(0U * sizeof(float), 5 * sizeof(float));
+	r.SetTexCoordBuffer(3 * sizeof(float), 5 * sizeof(float));
 	r.EndRenderVertexArrayIndexed(m_iBillboardIB, 6);
+
+	r.SetUniform("bDiffuse", false);
+	r.Scale(.25, .25, .25);
 
 	// Prepare a list of entities to render.
 	m_apRenderOpaqueList.clear();
@@ -513,6 +523,12 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 				c.SetBlend(BLEND_ALPHA);
 			}
 
+			if (pCharacter->m_iTexture)
+			{
+				c.SetUniform("bDiffuse", true);
+				c.BindTexture(pCharacter->m_iTexture);
+			}
+
 			// Render the player-box
 			c.RenderBox(pCharacter->m_aabbSize.vecMin, pCharacter->m_aabbSize.vecMax);
 		}
@@ -643,32 +659,59 @@ void CGame::GameLoop()
 	pProp1->m_aabbSize.vecMin = vecPropMin;
 	pProp1->m_aabbSize.vecMax = vecPropMax;
 	pProp1->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	pProp1->m_iTexture = m_iCrateTexture;
 
 	CCharacter* pProp2 = CreateCharacter();
 	pProp2->SetTransform(Vector(1, 1, 1), 30, Vector(0, 1, 0), Vector(10, 0, 15));
 	pProp2->m_aabbSize.vecMin = vecPropMin;
 	pProp2->m_aabbSize.vecMax = vecPropMax;
 	pProp2->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	pProp2->m_iTexture = m_iCrateTexture;
 
 	CCharacter* pProp3 = CreateCharacter();
 	pProp3->SetTransform(Vector(1, 1, 1), -30, Vector(0, 1, 0), Vector(11, 0, 8));
 	pProp3->m_aabbSize.vecMin = vecPropMin;
 	pProp3->m_aabbSize.vecMax = vecPropMax;
 	pProp3->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	pProp3->m_iTexture = m_iCrateTexture;
 
 	CCharacter* pProp4 = CreateCharacter();
 	pProp4->SetTransform(Vector(1, 1, 1), 40, Vector(0, 1, 0), Vector(-2, 0, 14));
 	pProp4->m_aabbSize.vecMin = vecPropMin;
 	pProp4->m_aabbSize.vecMax = vecPropMax;
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+	pProp4->m_iTexture = m_iCrateTexture;
 
 	// Create an array of vectors to store our vertexes.
-	vector<Vector> avecPoints;
+	vector<float> aflPoints;
 
-	avecPoints.push_back(Vector(1, 1, 0)); // A
-	avecPoints.push_back(Vector(0, 1, 0)); // B
-	avecPoints.push_back(Vector(0, 0, 0)); // C
-	avecPoints.push_back(Vector(1, 0, 0)); // D
+	// A
+	aflPoints.push_back(1); // Three floats - Position x
+	aflPoints.push_back(1); // y
+	aflPoints.push_back(0); // z
+	aflPoints.push_back(1); // Two floats - Vertex coordinate u
+	aflPoints.push_back(1); // v
+
+	// B
+	aflPoints.push_back(0);
+	aflPoints.push_back(1);
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+	aflPoints.push_back(1);
+
+	// C
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+
+	// D
+	aflPoints.push_back(1);
+	aflPoints.push_back(0);
+	aflPoints.push_back(0);
+	aflPoints.push_back(1);
+	aflPoints.push_back(0);
 
 	vector<unsigned int> aiIndices;
 
@@ -682,10 +725,10 @@ void CGame::GameLoop()
 	aiIndices.push_back(1);
 	aiIndices.push_back(2);
 
-	m_iBillboardVB = CRenderer::LoadVertexDataIntoGL(avecPoints.size() * sizeof(Vector), &avecPoints[0].x);
+	m_iBillboardVB = CRenderer::LoadVertexDataIntoGL(aflPoints.size() * sizeof(float), &aflPoints[0]);
 	m_iBillboardIB = CRenderer::LoadIndexDataIntoGL(aiIndices.size() * sizeof(unsigned int), &aiIndices[0]);
 
-	avecPoints.clear();
+	aflPoints.clear();
 	aiIndices.clear();
 
 	float flPreviousTime = 0;

@@ -78,6 +78,7 @@ public:
 	float     m_flSpeed;
 	AABB      m_aabbSize;
 	Color     m_clrRender;
+	size_t    m_iTexture;
 	size_t    m_iBillboardTexture;
 	bool      m_bHitByTraces;
 	bool      m_bEnemyAI;

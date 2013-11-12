@@ -97,6 +97,7 @@ private:
 	vector<CBulletTracer> m_aTracers;
 
 	size_t m_iMonsterTexture;
+	size_t m_iCrateTexture;
 
 	CCharacter*              m_apEntityList[MAX_CHARACTERS];
 	std::vector<CCharacter*> m_apRenderOpaqueList;
