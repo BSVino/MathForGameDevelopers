@@ -337,7 +337,7 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 	Vector vecRight(0, 0, vecMaxs.z - vecMins.z);
 
 	// The back face
-	BeginRenderTriFan();
+	BeginRenderTris();
 		Normal(Vector(-1, 0, 0));
 		TexCoord(0.0f, 0.0f);
 		Vertex(vecMins);
@@ -345,12 +345,14 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 		Vertex(vecMins + vecRight);
 		TexCoord(1.0f, 1.0f);
 		Vertex(vecMins + vecRight + vecUp);
+		TexCoord(0.0f, 0.0f);
+		Vertex(vecMins);
+		TexCoord(1.0f, 1.0f);
+		Vertex(vecMins + vecRight + vecUp);
 		TexCoord(0.0f, 1.0f);
 		Vertex(vecMins + vecUp);
-	EndRender();
 
-	// The left face
-	BeginRenderTriFan();
+		// The left face
 		Normal(Vector(0, 0, -1));
 		TexCoord(0.0f, 0.0f);
 		Vertex(vecMins);
@@ -358,12 +360,14 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 		Vertex(vecMins + vecUp);
 		TexCoord(1.0f, 1.0f);
 		Vertex(vecMins + vecUp + vecForward);
+		TexCoord(0.0f, 0.0f);
+		Vertex(vecMins);
+		TexCoord(1.0f, 1.0f);
+		Vertex(vecMins + vecUp + vecForward);
 		TexCoord(1.0f, 0.0f);
 		Vertex(vecMins + vecForward);
-	EndRender();
 
-	// The bottom face
-	BeginRenderTriFan();
+		// The bottom face
 		Normal(Vector(0, -1, 0));
 		TexCoord(0.0f, 0.0f);
 		Vertex(vecMins);
@@ -371,12 +375,14 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 		Vertex(vecMins + vecForward);
 		TexCoord(1.0f, 1.0f);
 		Vertex(vecMins + vecForward + vecRight);
+		TexCoord(0.0f, 0.0f);
+		Vertex(vecMins);
+		TexCoord(1.0f, 1.0f);
+		Vertex(vecMins + vecForward + vecRight);
 		TexCoord(0.0f, 1.0f);
 		Vertex(vecMins + vecRight);
-	EndRender();
 
-	// The top face
-	BeginRenderTriFan();
+		// The top face
 		Normal(Vector(0, 1, 0));
 		TexCoord(0.0f, 1.0f);
 		Vertex(vecMins + vecRight + vecUp + vecForward);
@@ -384,12 +390,14 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 		Vertex(vecMins + vecUp + vecForward);
 		TexCoord(1.0f, 0.0f);
 		Vertex(vecMins + vecUp);
+		TexCoord(0.0f, 1.0f);
+		Vertex(vecMins + vecRight + vecUp + vecForward);
+		TexCoord(1.0f, 0.0f);
+		Vertex(vecMins + vecUp);
 		TexCoord(1.0f, 1.0f);
 		Vertex(vecMins + vecRight + vecUp);
-	EndRender();
 
-	// The right face
-	BeginRenderTriFan();
+		// The right face
 		Normal(Vector(0, 0, 1));
 		TexCoord(0.0f, 1.0f);
 		Vertex(vecMins + vecRight + vecUp + vecForward);
@@ -397,17 +405,23 @@ void CRenderingContext::RenderBox(const Vector& vecMins, const Vector& vecMaxs)
 		Vertex(vecMins + vecRight + vecUp);
 		TexCoord(1.0f, 0.0f);
 		Vertex(vecMins + vecRight);
+		TexCoord(0.0f, 1.0f);
+		Vertex(vecMins + vecRight + vecUp + vecForward);
+		TexCoord(1.0f, 0.0f);
+		Vertex(vecMins + vecRight);
 		TexCoord(0.0f, 0.0f);
 		Vertex(vecMins + vecForward + vecRight);
-	EndRender();
 
-	// The front face
-	BeginRenderTriFan();
+		// The front face
 		Normal(Vector(1, 0, 0));
 		TexCoord(0.0f, 1.0f);
 		Vertex(vecMins + vecRight + vecUp + vecForward);
 		TexCoord(0.0f, 0.0f);
 		Vertex(vecMins + vecForward + vecRight);
+		TexCoord(1.0f, 0.0f);
+		Vertex(vecMins + vecForward);
+		TexCoord(0.0f, 1.0f);
+		Vertex(vecMins + vecRight + vecUp + vecForward);
 		TexCoord(1.0f, 0.0f);
 		Vertex(vecMins + vecForward);
 		TexCoord(1.0f, 1.0f);

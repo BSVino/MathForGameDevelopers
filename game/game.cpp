@@ -366,24 +366,26 @@ void CGame::Draw()
 		r.SetUniform("bDiffuse", true);
 		r.BindTexture(m_iCrateTexture);
 
-		r.Scale(4, 4, 4);
+		Matrix4x4 mScale;
+		float flScale = Remap(sin(Game()->GetTime()), -1, 1, 1, 2);
+		mScale.AddScale(Vector(flScale, flScale, flScale));
 
-		r.Translate(Vector(1, 0, 0));
+		Matrix4x4 mRotation;
+		mRotation.SetRotation(Game()->GetTime()*50, Vector(0, 1, 0));
+
+		Matrix4x4 mTranslation;
+		mTranslation.SetTranslation(Vector(cos(Game()->GetTime()), 0, sin(Game()->GetTime()))*10);
+
+		Matrix4x4 mModel;
+		mModel = mTranslation * mRotation * mScale;
+		r.LoadTransform(mModel);
 
 		// Render the triangles.
-		r.BeginRenderVertexArray(m_iMeshSmoothVB);
+		r.BeginRenderVertexArray(m_iMeshVB);
 		r.SetPositionBuffer(0U * sizeof(float), 8 * sizeof(float));
-		r.SetTexCoordBuffer(3 * sizeof(float), 8 * sizeof(float));
-		r.SetNormalsBuffer(5 * sizeof(float), 8 * sizeof(float));
-		r.EndRenderVertexArrayIndexed(m_iMeshSmoothIB, 12);
-
-		r.Translate(Vector(-1, 0, -1));
-
-		r.BeginRenderVertexArray(m_iMeshCreasedVB);
-		r.SetPositionBuffer(0U * sizeof(float), 8 * sizeof(float));
-		r.SetTexCoordBuffer(3 * sizeof(float), 8 * sizeof(float));
-		r.SetNormalsBuffer(5 * sizeof(float), 8 * sizeof(float));
-		r.EndRenderVertexArrayIndexed(m_iMeshCreasedIB, 12);
+		r.SetNormalsBuffer(3 * sizeof(float), 8 * sizeof(float));
+		r.SetTexCoordBuffer(6 * sizeof(float), 8 * sizeof(float));
+		r.EndRenderVertexArray(m_iMeshSize);
 
 		r.SetUniform("bDiffuse", false);
 	}
@@ -702,192 +704,9 @@ void CGame::GameLoop()
 	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 	pProp4->m_iTexture = m_iCrateTexture;
 
-	// Create an array of vectors to store our vertexes.
-	vector<float> aflPoints;
-
-	// A
-	aflPoints.push_back(1); // Position - Three floats x
-	aflPoints.push_back(1); // y
-	aflPoints.push_back(0); // z
-	aflPoints.push_back(1); // Vertex coordinates - Two floats u
-	aflPoints.push_back(1); // v
-	aflPoints.push_back(0); // Normal - Three floats x
-	aflPoints.push_back(0); // y
-	aflPoints.push_back(1); // z
-
-	// B
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-
-	// C
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-
-	// D
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-
-	// A
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-
-	// B
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-
-	// C
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-
-	// D
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-
-	vector<unsigned int> aiIndices;
-
-	aiIndices.push_back(3);
-	aiIndices.push_back(0);
-	aiIndices.push_back(1);
-
-	aiIndices.push_back(3);
-	aiIndices.push_back(1);
-	aiIndices.push_back(2);
-
-	aiIndices.push_back(7);
-	aiIndices.push_back(4);
-	aiIndices.push_back(5);
-
-	aiIndices.push_back(7);
-	aiIndices.push_back(5);
-	aiIndices.push_back(6);
-
-	m_iMeshCreasedVB = CRenderer::LoadVertexDataIntoGL(aflPoints.size() * sizeof(float), &aflPoints[0]);
-	m_iMeshCreasedIB = CRenderer::LoadIndexDataIntoGL(aiIndices.size() * sizeof(unsigned int), &aiIndices[0]);
-
-	aflPoints.clear();
-	aiIndices.clear();
-
-	Vector vecFront(0, 0, 1);
-	Vector vecSide(-1, 0, 0);
-	Vector vecAverage = ((vecFront + vecSide)*0.5f).Normalized();
-
-	aflPoints.push_back(1); // Three floats - Position x
-	aflPoints.push_back(1); // y
-	aflPoints.push_back(0); // z
-	aflPoints.push_back(1); // Two floats - Vertex coordinate u
-	aflPoints.push_back(1); // v
-	aflPoints.push_back(vecFront.x);
-	aflPoints.push_back(vecFront.y);
-	aflPoints.push_back(vecFront.z);
-
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(vecAverage.x);
-	aflPoints.push_back(vecAverage.y);
-	aflPoints.push_back(vecAverage.z);
-
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(vecAverage.x);
-	aflPoints.push_back(vecAverage.y);
-	aflPoints.push_back(vecAverage.z);
-
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(vecFront.x);
-	aflPoints.push_back(vecFront.y);
-	aflPoints.push_back(vecFront.z);
-
-	aflPoints.push_back(0);
-	aflPoints.push_back(0);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(0);
-	aflPoints.push_back(vecSide.x);
-	aflPoints.push_back(vecSide.y);
-	aflPoints.push_back(vecSide.z);
-
-	aflPoints.push_back(0);
-	aflPoints.push_back(1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(-1);
-	aflPoints.push_back(1);
-	aflPoints.push_back(vecSide.x);
-	aflPoints.push_back(vecSide.y);
-	aflPoints.push_back(vecSide.z);
-
-	aiIndices.push_back(3);
-	aiIndices.push_back(0);
-	aiIndices.push_back(1);
-
-	aiIndices.push_back(3);
-	aiIndices.push_back(1);
-	aiIndices.push_back(2);
-
-	aiIndices.push_back(2);
-	aiIndices.push_back(1);
-	aiIndices.push_back(5);
-
-	aiIndices.push_back(2);
-	aiIndices.push_back(5);
-	aiIndices.push_back(4);
-
-	m_iMeshSmoothVB = CRenderer::LoadVertexDataIntoGL(aflPoints.size() * sizeof(float), &aflPoints[0]);
-	m_iMeshSmoothIB = CRenderer::LoadIndexDataIntoGL(aiIndices.size() * sizeof(unsigned int), &aiIndices[0]);
-
-	aflPoints.clear();
-	aiIndices.clear();
+	CRenderingContext c(GetRenderer());
+	c.RenderBox(Vector(-1, 0, -1), Vector(1, 2, 1));
+	c.CreateVBO(m_iMeshVB, m_iMeshSize);
 
 	float flPreviousTime = 0;
 	float flCurrentTime = Application()->GetTime();

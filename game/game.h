@@ -106,11 +106,8 @@ private:
 	// This is the player character
 	CHandle m_hPlayer;
 
-	size_t m_iMeshSmoothVB;
-	size_t m_iMeshSmoothIB;
-
-	size_t m_iMeshCreasedVB;
-	size_t m_iMeshCreasedIB;
+	size_t m_iMeshVB;
+	size_t m_iMeshSize;
 };
 
 inline CGame* Game()
