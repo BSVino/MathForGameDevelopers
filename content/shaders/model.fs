@@ -19,16 +19,21 @@ void main()
 	// This 3x3 matrix should have the rotation components only. We need it to transform the fragment normals into world space.
 	mat3 mGlobal3x3 = mat3(mGlobal);
 
-	// Dot product of the sunlight vector and the normal vector of this surface
-	float flLightDot = dot(vecSunlight, normalize(mGlobal3x3*vecFragmentNormal));
+	// Transform the local space fragment normal into a global space vector and normalize it.
+	// http://youtu.be/0zmLe4SssJc
+	vec3 vecGlobalNormal = normalize(mGlobal3x3*vecFragmentNormal);
 
-	// Remap the light values so that the negative result becomes positive
-	float flLight = RemapVal(flLightDot, -1.0, 0.0, 0.9, 0.4);
+	// Dot product of the sunlight vector and the normal vector of this surface.
+	// http://youtu.be/0zmLe4SssJc
+	float flLightDot = dot(-vecSunlight, vecGlobalNormal);
+
+	// Remap the light values so that they are a little softer
+	float flLight = RemapVal(flLightDot, 1.0, 0.0, 0.9, 0.4);
 
 	// Multiply that by the color to make a shadow
 	vec4 vecDiffuse = vecColor * flLight;
 
-	// Add in a diffuse if there is one
+	// Add in a diffuse if there is one. http://youtu.be/aw6Vi-_hwy0
 	if (bDiffuse)
 		vecDiffuse *= texture(iDiffuse, vecFragmentTexCoord0);
 
