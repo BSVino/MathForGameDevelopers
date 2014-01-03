@@ -34,7 +34,7 @@ void main()
 		vecLocalNormal.y = -vecLocalNormal.y;
 
 		// Create a matrix to transform the tangent from texture/triangle space to the object's local space.
-		// http://youtu.be/TpQudLqiFfU
+		// http://youtu.be/SZBkSYelJcg
 		mat3 mTBN = mat3(vecFragmentTangent, vecFragmentBitangent, vecFragmentNormal);
 		vecGlobalNormal = normalize(mGlobal3x3*mTBN*vecLocalNormal);
 	}
