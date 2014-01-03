@@ -98,6 +98,7 @@ private:
 
 	size_t m_iMonsterTexture;
 	size_t m_iCrateTexture;
+	size_t m_iNormalTexture;
 
 	CCharacter*              m_apEntityList[MAX_CHARACTERS];
 	std::vector<CCharacter*> m_apRenderOpaqueList;

@@ -32,6 +32,8 @@ using namespace std;
 vector<Vector2D> CRenderingContext::s_avecTexCoord;
 vector<vector<Vector2D> > CRenderingContext::s_aavecTexCoords;
 vector<Vector> CRenderingContext::s_avecNormals;
+vector<Vector> CRenderingContext::s_avecTangents;
+vector<Vector> CRenderingContext::s_avecBitangents;
 vector<Vector> CRenderingContext::s_avecVertices;
 
 vector<CRenderingContext::CRenderContext> CRenderingContext::s_aContexts;
@@ -558,6 +560,7 @@ void CRenderingContext::BeginRenderTris()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_TRIANGLES;
 }
@@ -572,6 +575,7 @@ void CRenderingContext::BeginRenderTriFan()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_TRIANGLE_FAN;
 }
@@ -586,6 +590,7 @@ void CRenderingContext::BeginRenderTriStrip()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_TRIANGLE_STRIP;
 }
@@ -600,6 +605,7 @@ void CRenderingContext::BeginRenderLines()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_LINES;
 }
@@ -614,6 +620,7 @@ void CRenderingContext::BeginRenderLineLoop()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_LINE_LOOP;
 }
@@ -628,6 +635,7 @@ void CRenderingContext::BeginRenderLineStrip()
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	m_iDrawMode = GL_LINE_STRIP;
 }
@@ -647,6 +655,7 @@ void CRenderingContext::BeginRenderPoints(float flSize)
 
 	m_bTexCoord = false;
 	m_bNormal = false;
+	m_bTangents = false;
 
 	glPointSize( flSize );
 	m_iDrawMode = GL_POINTS;
@@ -685,6 +694,20 @@ void CRenderingContext::Normal(const Vector& v)
 	m_bNormal = true;
 }
 
+void CRenderingContext::Tangent(const Vector& v)
+{
+	TAssert(m_bNormal);
+	m_vecTangent = v;
+	m_bTangents = true;
+}
+
+void CRenderingContext::Bitangent(const Vector& v)
+{
+	TAssert(m_bNormal);
+	m_vecBitangent = v;
+	m_bTangents = true;
+}
+
 void CRenderingContext::Vertex(const Vector& v)
 {
 	if (m_bTexCoord)
@@ -698,6 +721,12 @@ void CRenderingContext::Vertex(const Vector& v)
 
 	if (m_bNormal)
 		s_avecNormals.push_back(m_vecNormal);
+
+	if (m_bTangents)
+	{
+		s_avecTangents.push_back(m_vecTangent);
+		s_avecBitangents.push_back(m_vecBitangent);
+	}
 
 	s_avecVertices.push_back(v);
 }
@@ -742,6 +771,15 @@ void CRenderingContext::EndRender()
 		glVertexAttribPointer(m_pShader->m_iNormalAttribute, 3, GL_FLOAT, false, 0, s_avecNormals.data());
 	}
 
+	if (m_bTangents && m_pShader->m_iTangentAttribute != ~0 && m_pShader->m_iBitangentAttribute != ~0)
+	{
+		glEnableVertexAttribArray(m_pShader->m_iTangentAttribute);
+		glVertexAttribPointer(m_pShader->m_iTangentAttribute, 3, GL_FLOAT, false, 0, s_avecTangents.data());
+
+		glEnableVertexAttribArray(m_pShader->m_iBitangentAttribute);
+		glVertexAttribPointer(m_pShader->m_iBitangentAttribute, 3, GL_FLOAT, false, 0, s_avecBitangents.data());
+	}
+
 	glEnableVertexAttribArray(m_pShader->m_iPositionAttribute);
 	glVertexAttribPointer(m_pShader->m_iPositionAttribute, 3, GL_FLOAT, false, 0, s_avecVertices.data());
 
@@ -755,6 +793,10 @@ void CRenderingContext::EndRender()
 	}
 	if (m_pShader->m_iNormalAttribute != ~0)
 		glDisableVertexAttribArray(m_pShader->m_iNormalAttribute);
+	if (m_pShader->m_iTangentAttribute != ~0)
+		glDisableVertexAttribArray(m_pShader->m_iTangentAttribute);
+	if (m_pShader->m_iBitangentAttribute != ~0)
+		glDisableVertexAttribArray(m_pShader->m_iBitangentAttribute);
 	if (m_pShader->m_iColorAttribute != ~0)
 		glDisableVertexAttribArray(m_pShader->m_iColorAttribute);
 }

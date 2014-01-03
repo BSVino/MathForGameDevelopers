@@ -134,6 +134,8 @@ public:
 	void					TexCoord(const Vector2D& v, int iChannel = 0);
 	void					TexCoord(const Vector& v, int iChannel = 0);
 	void					Normal(const Vector& v);
+	void					Tangent(const Vector& v);
+	void					Bitangent(const Vector& v);
 	void					Vertex(const Vector& v);
 	void					EndRender();
 	void                    CreateVBO(size_t& iVBO, size_t& iVBOSize);
@@ -172,11 +174,19 @@ public:
 
 	int						m_iDrawMode;
 	bool					m_bTexCoord;
+
 	bool					m_bNormal;
 	Vector                  m_vecNormal;
+
+	bool                    m_bTangents;
+	Vector                  m_vecTangent;
+	Vector                  m_vecBitangent;
+
 	static std::vector<Vector2D>    s_avecTexCoord;
 	static std::vector<std::vector<Vector2D> > s_aavecTexCoords;	// A vector of a vector of vectors. Inception!
 	static std::vector<Vector>      s_avecNormals;
+	static std::vector<Vector>      s_avecTangents;
+	static std::vector<Vector>      s_avecBitangents;
 	static std::vector<Vector>      s_avecVertices;
 
 	static std::vector<CRenderContext> s_aContexts;

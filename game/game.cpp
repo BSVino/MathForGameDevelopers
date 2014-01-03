@@ -43,6 +43,7 @@ void CGame::Load()
 {
 	m_iMonsterTexture = GetRenderer()->LoadTextureIntoGL("monster.png");
 	m_iCrateTexture = GetRenderer()->LoadTextureIntoGL("crate.png");
+	m_iNormalTexture = GetRenderer()->LoadTextureIntoGL("normal.png");
 }
 
 void CGame::MakePuff(const Point& p)
@@ -342,17 +343,29 @@ void CGame::Draw()
 
 	r.SetUniform("vecSunlight", vecSunlight);
 
+	r.SetUniform("bLighted", true);
 	r.SetUniform("bDiffuse", false);
 
 	// Render the ground.
 	r.SetUniform("vecColor", Vector4D(0.6f, 0.7f, 0.9f, 1));
+	r.SetUniform("bNormal", true);
+	r.SetUniform("iNormal", 1);
+	r.BindTexture(m_iNormalTexture, 1);
 	r.BeginRenderTriFan();
 		r.Normal(Vector(0, 1, 0));
+		r.Tangent(Vector(1, 0, 0));
+		r.Bitangent(Vector(0, 0, 1));
+		r.TexCoord(Vector2D(0, 1));
 		r.Vertex(Vector(-30, 0, -30));
+		r.TexCoord(Vector2D(0, 0));
 		r.Vertex(Vector(-30, 0, 30));
+		r.TexCoord(Vector2D(1, 0));
 		r.Vertex(Vector(30, 0, 30));
+		r.TexCoord(Vector2D(1, 1));
 		r.Vertex(Vector(30, 0, -30));
 	r.EndRender();
+
+	r.SetUniform("bNormal", false);
 
 	{
 		CRenderingContext r(pRenderer, true);
