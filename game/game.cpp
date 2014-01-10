@@ -339,7 +339,10 @@ void CGame::Draw()
 	r.UseProgram("model");
 
 	// Set the sunlight direction. The y component is -1 so the light is pointing down.
-	Vector vecSunlight = Vector(cos(Game()->GetTime()), -1, sin(Game()->GetTime())).Normalized();
+	Vector vecSunlight = Vector(1, -1, 1).Normalized();
+
+	// Uncomment this code to make the sunlight rotate:
+	//Vector vecSunlight = Vector(cos(Game()->GetTime()), -1, sin(Game()->GetTime())).Normalized();
 
 	r.SetUniform("vecSunlight", vecSunlight);
 
@@ -348,6 +351,7 @@ void CGame::Draw()
 
 	// Render the ground.
 	r.SetUniform("vecColor", Vector4D(0.6f, 0.7f, 0.9f, 1));
+	r.SetUniform("vecCameraPosition", GetRenderer()->GetCameraPosition());
 	r.SetUniform("bNormal", true);
 	r.SetUniform("iNormal", 1);
 	r.BindTexture(m_iNormalTexture, 1);

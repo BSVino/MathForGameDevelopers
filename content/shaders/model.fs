@@ -3,6 +3,7 @@ uniform sampler2D iDiffuse;
 uniform bool bNormal = false;
 uniform sampler2D iNormal;
 uniform vec4 vecColor = vec4(1.0, 1.0, 1.0, 1.0);
+uniform vec3 vecCameraPosition;
 
 uniform bool bLighted;
 uniform vec3 vecSunlight;
@@ -50,14 +51,36 @@ void main()
 	{
 		// Dot product of the sunlight vector and the normal vector of this surface.
 		// http://youtu.be/0zmLe4SssJc
-		float flLightDot = dot(-vecSunlight, vecGlobalNormal);
+		float flDiffuseTerm = dot(-vecSunlight, vecGlobalNormal);
 
 		// If the surface normal is > 90 degrees away from the light then clamp the light value to 0.
-		if (flLightDot < 0)
-			flLightDot = 0;
+		if (flDiffuseTerm < 0.0)
+			flDiffuseTerm = 0.0;
 
 		// Remap the light values so that they are a little softer
-		flLight = RemapVal(flLightDot, 1.0, 0.0, 0.9, 0.2);
+		flDiffuseTerm = RemapVal(flDiffuseTerm, 1.0, 0.0, 0.9, 0.2);
+
+		vec3 vecToCamera = normalize(vecCameraPosition - vecFragmentPosition);
+		vec3 vecHalf = normalize(vecToCamera - vecSunlight);
+
+		// Generate the specular term http://youtu.be/hmKgNjQLm3A
+		float flSpecularTerm = dot(vecGlobalNormal, vecHalf);
+
+		// If the surface normal is > 90 degrees away from the light then clamp the light value to 0.
+		if (flSpecularTerm < 0.0)
+			flSpecularTerm = 0.0;
+
+		float a = 15.0; // You can pull this from a specular map
+		float c = 0.8;  // You can pull this from a gloss map
+
+		// a is the "shininess" of the specularity
+		// c is the brightness of the specular term
+		flSpecularTerm = pow(flSpecularTerm, a);
+
+		if (gl_FragCoord.x < 160.0 && gl_FragCoord.y < 120.0)
+			flLight = flDiffuseTerm;
+		else
+			flLight = flDiffuseTerm + c * flSpecularTerm;
 	}
 
 	// Multiply that by the color to make a shadow
