@@ -87,6 +87,7 @@
     <ClCompile Include="renderer\renderer.cpp" />
     <ClCompile Include="renderer\renderingcontext.cpp" />
     <ClCompile Include="renderer\shaders.cpp" />
+    <ClCompile Include="renderer\stanfordbunny.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib" />

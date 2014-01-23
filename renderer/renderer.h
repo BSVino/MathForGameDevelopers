@@ -46,6 +46,13 @@ public:
 	virtual void	Initialize();
 	void			LoadShaders();
 
+	void InitBunny();
+	int  GetBunnyVerts();
+	int  GetBunnyNumVerts();
+	int  BunnyPositionOffsetBytes();
+	int  BunnyNormalOffsetBytes();
+	int  BunnyStrideBytes();
+
 	virtual void	WindowResize(int w, int h);
 
 	virtual void	StartRendering(class CRenderingContext* pContext);
@@ -119,6 +126,9 @@ protected:
 
 	bool			m_bUseMultisampleTextures;
 	int				m_iScreenSamples;
+
+	int m_iBunnyVerts;
+	int m_iBunnyNumVerts;
 
 	static CRenderer* s_pRenderer;
 	static size_t	s_iTexturesLoaded;

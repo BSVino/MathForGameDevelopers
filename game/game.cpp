@@ -433,6 +433,23 @@ void CGame::Draw()
 			m_apRenderOpaqueList.push_back(pCharacter);
 	}
 
+	{
+		CRenderingContext r(pRenderer, true);
+
+		r.SetUniform("bDiffuse", false);
+		r.SetUniform("bRimLighting", true);
+
+		r.Scale(10, 10, 10);
+		r.Translate(Vector(0, 0.5f, -2));
+
+		r.BeginRenderVertexArray(GetRenderer()->GetBunnyVerts());
+		r.SetPositionBuffer(GetRenderer()->BunnyPositionOffsetBytes(), GetRenderer()->BunnyStrideBytes());
+		r.SetNormalsBuffer(GetRenderer()->BunnyNormalOffsetBytes(), GetRenderer()->BunnyStrideBytes());
+		r.EndRenderVertexArray(GetRenderer()->GetBunnyNumVerts());
+
+		r.SetUniform("bRimLighting", false);
+	}
+
 	// Draw all opaque characters first.
 	DrawCharacters(m_apRenderOpaqueList, false);
 

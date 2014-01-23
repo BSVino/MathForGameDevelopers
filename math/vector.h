@@ -27,8 +27,15 @@ public:
 		y = Y;
 		z = Z;
 	}
+	Vector(float XYZ[3])
+	{
+		x = XYZ[0];
+		y = XYZ[1];
+		z = XYZ[2];
+	}
 	Vector(const class Point& p);
 
+public:
 	float Length() const;
 	float LengthSqr() const;
 

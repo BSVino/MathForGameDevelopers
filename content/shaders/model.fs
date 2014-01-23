@@ -8,6 +8,8 @@ uniform vec3 vecCameraPosition;
 uniform bool bLighted;
 uniform vec3 vecSunlight;
 
+uniform bool bRimLighting;
+
 uniform float flAlpha;
 
 in vec3 vecFragmentLocalPosition;
@@ -81,15 +83,29 @@ void main()
 		flLight = flDiffuseTerm + c * flSpecularTerm;
 	}
 
+	vec3 vecToCamera = vecCameraPosition - vecFragmentGlobalPosition;
+	float flToCameraLength = length(vecCameraPosition - vecFragmentGlobalPosition);
+	vec3 vecToCameraNormalized = vecToCamera/flToCameraLength;
+
 	// Multiply that by the color to make a shadow
 	vec4 vecDiffuse = vecColor * flLight;
+
+	if (bRimLighting)
+	{
+		// Rim lighting. http://youtu.be/hB_F3KwMCkU
+		float flRimLight = 1 - dot(vecToCameraNormalized, vecGlobalNormal);
+		flRimLight = clamp(flRimLight - 0.5, 0.0, 1.0);
+
+		if (gl_FragCoord.x < 400.0)
+			vecDiffuse += flRimLight * vec4(0.4, 0.4, 1.0, 1.0);
+	}
 
 	// Add in a diffuse if there is one. http://youtu.be/aw6Vi-_hwy0
 	if (bDiffuse)
 		vecDiffuse *= texture(iDiffuse, vecFragmentTexCoord0);
 
 	// Add in some fog. http://youtu.be/YpKVXNPOXg8
-	float flDistance = length(vecCameraPosition - vecFragmentGlobalPosition);
+	float flDistance = flToCameraLength;
 
 	float flFogMin = 10.0;
 	float flFogMax = 50.0;
