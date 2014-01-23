@@ -7,7 +7,8 @@ in vec3 vecBitangent;
 in vec2 vecTexCoord0;
 in vec3 vecVertexColor;
 
-out vec3 vecFragmentPosition;
+out vec3 vecFragmentLocalPosition;
+out vec3 vecFragmentGlobalPosition;
 out vec3 vecFragmentNormal;
 out vec3 vecFragmentTangent;
 out vec3 vecFragmentBitangent;
@@ -16,12 +17,15 @@ out vec3 vecFragmentColor;
 
 void main()
 {
-	gl_Position = mProjection * mView * mGlobal * vec4(vecPosition, 1.0);
+	vec4 vecGlobal = mGlobal * vec4(vecPosition, 1.0);
 
-	vecFragmentPosition = vecPosition;
+	vecFragmentLocalPosition = vecPosition;
+	vecFragmentGlobalPosition = vecGlobal.xyz;
 	vecFragmentNormal = vecNormal;
 	vecFragmentTangent = vecTangent;
 	vecFragmentBitangent = vecBitangent;
 	vecFragmentTexCoord0 = vec2(vecTexCoord0.x, 1-vecTexCoord0.y);
 	vecFragmentColor = vecVertexColor;
+
+	gl_Position = mProjection * mView * vecGlobal;
 }

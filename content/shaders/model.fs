@@ -10,7 +10,8 @@ uniform vec3 vecSunlight;
 
 uniform float flAlpha;
 
-in vec3 vecFragmentPosition;
+in vec3 vecFragmentLocalPosition;
+in vec3 vecFragmentGlobalPosition;
 in vec2 vecFragmentTexCoord0;
 in vec3 vecFragmentNormal;
 in vec3 vecFragmentTangent;
@@ -60,7 +61,7 @@ void main()
 		// Remap the light values so that they are a little softer
 		flDiffuseTerm = RemapVal(flDiffuseTerm, 1.0, 0.0, 0.9, 0.2);
 
-		vec3 vecToCamera = normalize(vecCameraPosition - vecFragmentPosition);
+		vec3 vecToCamera = normalize(vecCameraPosition - vecFragmentGlobalPosition);
 		vec3 vecHalf = normalize(vecToCamera - vecSunlight);
 
 		// Generate the specular term http://youtu.be/hmKgNjQLm3A
@@ -77,10 +78,7 @@ void main()
 		// c is the brightness of the specular term
 		flSpecularTerm = pow(flSpecularTerm, a);
 
-		if (gl_FragCoord.x < 160.0 && gl_FragCoord.y < 120.0)
-			flLight = flDiffuseTerm;
-		else
-			flLight = flDiffuseTerm + c * flSpecularTerm;
+		flLight = flDiffuseTerm + c * flSpecularTerm;
 	}
 
 	// Multiply that by the color to make a shadow
@@ -90,8 +88,18 @@ void main()
 	if (bDiffuse)
 		vecDiffuse *= texture(iDiffuse, vecFragmentTexCoord0);
 
+	// Add in some fog. http://youtu.be/YpKVXNPOXg8
+	float flDistance = length(vecCameraPosition - vecFragmentGlobalPosition);
+
+	float flFogMin = 10.0;
+	float flFogMax = 50.0;
+	float flFog = RemapValClamped(flDistance, flFogMin, flFogMax, 0.0, 1.0);
+
+	vec4 vecFogColor = vec4(0.76, 0.8, 0.85, 1.0);
+	vec4 vecFoggedDiffuse = vecDiffuse * (1-flFog) + vecFogColor * flFog;
+
 	// Use that as our output color
-	vecOutputColor = vecDiffuse;
+	vecOutputColor = vecFoggedDiffuse;
 
 	if (vecDiffuse.a < 0.01)
 		discard;
