@@ -44,6 +44,8 @@ void CGame::Load()
 	m_iMonsterTexture = GetRenderer()->LoadTextureIntoGL("monster.png");
 	m_iCrateTexture = GetRenderer()->LoadTextureIntoGL("crate.png");
 	m_iNormalTexture = GetRenderer()->LoadTextureIntoGL("normal.png");
+
+	GraphReset();
 }
 
 void CGame::MakePuff(const Point& p)
@@ -89,6 +91,16 @@ bool CGame::KeyPress(int c)
 	else if (c == ' ')
 	{
 		m_hPlayer->m_vecVelocity.y = 7;
+		return true;
+	}
+	else if (c == 'G')
+	{
+		GraphStep();
+		return true;
+	}
+	else if (c == 'R')
+	{
+		GraphReset();
 		return true;
 	}
 	else
@@ -346,15 +358,12 @@ void CGame::Draw()
 
 	r.SetUniform("vecSunlight", vecSunlight);
 
-	r.SetUniform("bLighted", true);
+	r.SetUniform("bLighted", false);
 	r.SetUniform("bDiffuse", false);
 
 	// Render the ground.
 	r.SetUniform("vecColor", Vector4D(0.6f, 0.7f, 0.9f, 1));
 	r.SetUniform("vecCameraPosition", GetRenderer()->GetCameraPosition());
-	r.SetUniform("bNormal", true);
-	r.SetUniform("iNormal", 1);
-	r.BindTexture(m_iNormalTexture, 1);
 	r.BeginRenderTriFan();
 		r.Normal(Vector(0, 1, 0));
 		r.Tangent(Vector(1, 0, 0));
@@ -369,43 +378,7 @@ void CGame::Draw()
 		r.Vertex(Vector(30, 0, -30));
 	r.EndRender();
 
-	r.SetUniform("bNormal", false);
-
-	{
-		CRenderingContext r(pRenderer, true);
-
-		r.UseProgram("model");
-
-		r.SetUniform("vecSunlight", vecSunlight);
-
-		r.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
-
-		r.SetUniform("bDiffuse", true);
-		r.BindTexture(m_iCrateTexture);
-
-		Matrix4x4 mScale;
-		float flScale = Remap(sin(Game()->GetTime()), -1, 1, 1, 2);
-		mScale.AddScale(Vector(flScale, flScale, flScale));
-
-		Matrix4x4 mRotation;
-		mRotation.SetRotation(Game()->GetTime()*50, Vector(0, 1, 0));
-
-		Matrix4x4 mTranslation;
-		mTranslation.SetTranslation(Vector(cos(Game()->GetTime()), 0, sin(Game()->GetTime()))*10);
-
-		Matrix4x4 mModel;
-		mModel = mTranslation * mRotation * mScale;
-		r.LoadTransform(mModel);
-
-		// Render the triangles.
-		r.BeginRenderVertexArray(m_iMeshVB);
-		r.SetPositionBuffer(0U * sizeof(float), 8 * sizeof(float));
-		r.SetNormalsBuffer(3 * sizeof(float), 8 * sizeof(float));
-		r.SetTexCoordBuffer(6 * sizeof(float), 8 * sizeof(float));
-		r.EndRenderVertexArray(m_iMeshSize);
-
-		r.SetUniform("bDiffuse", false);
-	}
+	r.SetUniform("bLighted", true);
 
 	// Prepare a list of entities to render.
 	m_apRenderOpaqueList.clear();
@@ -431,23 +404,6 @@ void CGame::Draw()
 			m_apRenderTransparentList.push_back(pCharacter);
 		else
 			m_apRenderOpaqueList.push_back(pCharacter);
-	}
-
-	{
-		CRenderingContext r(pRenderer, true);
-
-		r.SetUniform("bDiffuse", false);
-		r.SetUniform("bRimLighting", true);
-
-		r.Scale(10, 10, 10);
-		r.Translate(Vector(0, 0.5f, -2));
-
-		r.BeginRenderVertexArray(GetRenderer()->GetBunnyVerts());
-		r.SetPositionBuffer(GetRenderer()->BunnyPositionOffsetBytes(), GetRenderer()->BunnyStrideBytes());
-		r.SetNormalsBuffer(GetRenderer()->BunnyNormalOffsetBytes(), GetRenderer()->BunnyStrideBytes());
-		r.EndRenderVertexArray(GetRenderer()->GetBunnyNumVerts());
-
-		r.SetUniform("bRimLighting", false);
 	}
 
 	// Draw all opaque characters first.
@@ -518,6 +474,8 @@ void CGame::Draw()
 			r.RenderBox(vecOrigin - Vector(1, 1, 1)*flSize, vecOrigin + Vector(1, 1, 1)*flSize);
 		}
 	}
+
+	GraphDraw();
 
 	pRenderer->FinishRendering(&r);
 
@@ -818,4 +776,157 @@ void CGame::RemoveCharacter(CCharacter* pCharacter)
 CCharacter* CGame::GetCharacterIndex(size_t i)
 {
 	return m_apEntityList[i];
+}
+
+void CGame::GraphReset()
+{
+	m_eGraphStep = GRAPHSTEP_PICKUNSEEN;
+	m_iCurrentGroup = 0;
+	m_aiCurrentNodes.clear();
+
+	m_Graph = CGraph();
+
+	m_Graph.AddNode();
+	m_Graph.AddNode();
+	m_Graph.AddNode();
+
+	m_Graph.AddNode();
+	m_Graph.AddNode();
+	m_Graph.AddNode();
+	m_Graph.AddNode();
+
+	m_Graph.AddEdge(0, 1);
+	m_Graph.AddEdge(1, 2);
+
+	m_Graph.AddEdge(3, 4);
+	m_Graph.AddEdge(3, 5);
+	m_Graph.AddEdge(3, 6);
+	m_Graph.AddEdge(4, 5);
+	m_Graph.AddEdge(5, 6);
+
+	m_Graph.GetNode(0)->debug_position = Vector(0,  0, -5) * 4;
+	m_Graph.GetNode(1)->debug_position = Vector(-1, 0, -4) * 4;
+	m_Graph.GetNode(2)->debug_position = Vector(0,  0, -3) * 4;
+
+	m_Graph.GetNode(3)->debug_position = Vector(2,  0, -5) * 4;
+	m_Graph.GetNode(4)->debug_position = Vector(4,  0, -5) * 4;
+	m_Graph.GetNode(5)->debug_position = Vector(4,  0, -3) * 4;
+	m_Graph.GetNode(6)->debug_position = Vector(2,  0, -3) * 4;
+}
+
+void CGame::GraphStep()
+{
+	if (m_eGraphStep == GRAPHSTEP_PICKUNSEEN)
+	{
+		int iCurrentNode = -1;
+		for (int i = 0; i < m_Graph.GetNumNodes(); i++)
+		{
+			if (m_Graph.GetNode(i)->HasBeenSeen())
+				continue;
+
+			iCurrentNode = i;
+			break;
+		}
+
+		if (iCurrentNode >= 0)
+		{
+			m_aiCurrentNodes.push_back(iCurrentNode);
+			m_eGraphStep = GRAPHSTEP_SKIPSEEN;
+		}
+	}
+	else if (m_eGraphStep == GRAPHSTEP_SKIPSEEN)
+	{
+		while (m_aiCurrentNodes.size() && m_Graph.GetNode(m_aiCurrentNodes.back())->HasBeenSeen())
+			m_aiCurrentNodes.pop_back();
+
+		if (!m_aiCurrentNodes.size())
+			m_eGraphStep = GRAPHSTEP_INCREASEGROUP;
+		else
+			m_eGraphStep = GRAPHSTEP_MARKGROUP;
+	}
+	else if (m_eGraphStep == GRAPHSTEP_MARKGROUP)
+	{
+		m_Graph.GetNode(m_aiCurrentNodes.back())->group = m_iCurrentGroup;
+
+		m_eGraphStep = GRAPHSTEP_FOLLOWEDGES;
+	}
+	else if (m_eGraphStep == GRAPHSTEP_FOLLOWEDGES)
+	{
+		int node = m_aiCurrentNodes.back();
+		m_aiCurrentNodes.pop_back();
+
+		for (edge_t i = 0; i < (edge_t)m_Graph.GetNode(node)->edges.size(); i++)
+		{
+			edge_t edge = m_Graph.GetNode(node)->edges[i];
+			node_t new_node = m_Graph.FollowEdge(node, edge);
+			m_aiCurrentNodes.push_back(new_node);
+		}
+
+		m_eGraphStep = GRAPHSTEP_SKIPSEEN;
+	}
+	else if (m_eGraphStep == GRAPHSTEP_INCREASEGROUP)
+	{
+		m_iCurrentGroup++;
+
+		m_eGraphStep = GRAPHSTEP_PICKUNSEEN;
+	}
+}
+
+void CGame::GraphDraw()
+{
+	CRenderingContext c(GetRenderer(), true);
+
+	for (int i = 0; i < m_Graph.GetNumNodes(); i++)
+	{
+		CGraph::CNode* node = m_Graph.GetNode(i);
+
+		if (node->group >= 0)
+		{
+			switch (node->group)
+			{
+			case 0:
+				c.SetUniform("vecColor", Color(255, 255, 0, 255));
+				break;
+			case 1:
+				c.SetUniform("vecColor", Color(255, 0, 255, 255));
+				break;
+			default:
+				c.SetUniform("vecColor", Color(255, 255, 255, 255));
+				break;
+			}
+		}
+		else
+		{
+			if (m_aiCurrentNodes.size() && m_aiCurrentNodes.back() == i)
+				c.SetUniform("vecColor", Color(0, 255, 0, 255));
+			else
+			{
+				c.SetUniform("vecColor", Color(255, 255, 255, 255));
+
+				for (size_t j = 0; j < m_aiCurrentNodes.size(); j++)
+				{
+					if (m_aiCurrentNodes[j] == i)
+					{
+						c.SetUniform("vecColor", Color(0, 0, 255, 255));
+						break;
+					}
+				}
+			}
+		}
+
+		c.RenderBox(node->debug_position - Vector(1, 1, 1), node->debug_position + Vector(1, 1, 1));
+	}
+
+	for (int i = 0; i < m_Graph.GetNumEdges(); i++)
+	{
+		CGraph::CEdge* edge = m_Graph.GetEdge(i);
+		CGraph::CNode* node1 = m_Graph.GetNode(edge->first);
+		CGraph::CNode* node2 = m_Graph.GetNode(edge->second);
+
+		c.SetUniform("vecColor", Vector4D(1, 1, 1, 1));
+		c.BeginRenderLines();
+			c.Vertex(node1->debug_position + Vector(0, 0.1f, 0));
+			c.Vertex(node2->debug_position + Vector(0, 0.1f, 0));
+		c.EndRender();
+	}
 }

@@ -21,6 +21,7 @@ SRCS_CPP= \
 	math/matrix.cpp \
 	math/quaternion.cpp \
 	math/vector.cpp \
+	math/graph.cpp \
 	renderer/application.cpp \
 	renderer/image_read.cpp \
 	renderer/renderer.cpp \

@@ -277,6 +277,8 @@ size_t CRenderer::LoadVertexDataIntoGL(size_t iSizeInBytes, float* aflVertices)
 		return 0;
 	}
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	return iVBO;
 }
 

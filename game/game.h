@@ -22,6 +22,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <common/common.h>
 
 #include <math/frustum.h>
+#include <math/graph.h>
 
 #include <renderer/application.h>
 
@@ -87,6 +88,10 @@ public:
 
 	size_t      GetMonsterTexture() { return m_iMonsterTexture; }
 
+	void GraphStep();
+	void GraphReset();
+	void GraphDraw();
+
 private:
 	int m_iLastMouseX;
 	int m_iLastMouseY;
@@ -109,6 +114,21 @@ private:
 
 	size_t m_iMeshVB;
 	size_t m_iMeshSize;
+
+	typedef enum
+	{
+		GRAPHSTEP_PICKUNSEEN,
+		GRAPHSTEP_SKIPSEEN,
+		GRAPHSTEP_MARKGROUP,
+		GRAPHSTEP_FOLLOWEDGES,
+		GRAPHSTEP_INCREASEGROUP,
+	} graph_step_t;
+
+	graph_step_t m_eGraphStep;
+	std::vector<int> m_aiCurrentNodes;
+	int m_iCurrentGroup;
+
+	CGraph m_Graph;
 };
 
 inline CGame* Game()
