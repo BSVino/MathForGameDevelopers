@@ -23,11 +23,13 @@ public:
 		CNode()
 		{
 			seen = false;
+			path_from = ~0;
 		}
 
 		std::vector<edge_t> edges;
 
 		bool seen;
+		node_t path_from;
 
 		Vector debug_position;
 	};

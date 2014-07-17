@@ -18,6 +18,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #pragma once
 
 #include <vector>
+#include <deque>
 
 #include <common/common.h>
 
@@ -119,17 +120,15 @@ private:
 	typedef enum
 	{
 		GRAPHSTEP_PUSHTOSTACK,
+		GRAPHSTEP_PUSHNEIGHBORS,
 		GRAPHSTEP_MARKSEEN,
-		GRAPHSTEP_FOLLOWEDGES,
-		GRAPHSTEP_TESTS,
-		GRAPHSTEP_PUSHNODE,
-		GRAPHSTEP_POPNODE,
+		GRAPHSTEP_POPFRONT,
+		GRAPHSTEP_RECONSTRUCT,
 	} graph_step_t;
 
 	graph_step_t m_eGraphStep;
-	std::vector<node_t> m_aiNodeStack;
-	node_t m_iTestNode;
-	node_t m_iTestEdge;
+	std::deque<node_t> m_aiNodeStack;
+	std::vector<node_t> m_aiPathStack;
 
 	CGraph m_Graph;
 	CGraph::CNode* m_pTargetNode;
