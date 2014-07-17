@@ -89,6 +89,7 @@ public:
 	size_t      GetMonsterTexture() { return m_iMonsterTexture; }
 
 	void GraphStep();
+	void GraphComplete();
 	void GraphReset();
 	void GraphDraw();
 
@@ -117,18 +118,21 @@ private:
 
 	typedef enum
 	{
-		GRAPHSTEP_PICKUNSEEN,
-		GRAPHSTEP_SKIPSEEN,
-		GRAPHSTEP_MARKGROUP,
+		GRAPHSTEP_PUSHTOSTACK,
+		GRAPHSTEP_MARKSEEN,
 		GRAPHSTEP_FOLLOWEDGES,
-		GRAPHSTEP_INCREASEGROUP,
+		GRAPHSTEP_TESTS,
+		GRAPHSTEP_PUSHNODE,
+		GRAPHSTEP_POPNODE,
 	} graph_step_t;
 
 	graph_step_t m_eGraphStep;
-	std::vector<int> m_aiCurrentNodes;
-	int m_iCurrentGroup;
+	std::vector<node_t> m_aiNodeStack;
+	node_t m_iTestNode;
+	node_t m_iTestEdge;
 
 	CGraph m_Graph;
+	CGraph::CNode* m_pTargetNode;
 };
 
 inline CGame* Game()

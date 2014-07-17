@@ -22,20 +22,14 @@ public:
 	public:
 		CNode()
 		{
-			group = -1;
+			seen = false;
 		}
 
 		std::vector<edge_t> edges;
 
-		int group;
+		bool seen;
 
 		Vector debug_position;
-
-	public:
-		bool HasBeenSeen()
-		{
-			return group >= 0;
-		}
 	};
 
 	void AddNode();
