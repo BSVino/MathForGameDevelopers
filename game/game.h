@@ -117,6 +117,7 @@ private:
 	size_t m_iMeshVB;
 	size_t m_iMeshSize;
 
+public:
 	typedef enum
 	{
 		GRAPHSTEP_BEGIN,

@@ -19,6 +19,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <cstring>
 
+#include <algorithm>
+
 #include <math/collision.h>
 #include <math/frustum.h>
 #include <maths.h>
@@ -817,6 +819,12 @@ void CGame::GraphReset()
 	m_pTargetNode = m_Graph.GetNode(5);
 }
 
+bool smaller_weight(const node_t& l, const node_t& r)
+{
+	auto& graph = Game()->m_Graph;
+	return graph.GetNode(l)->path_weight > graph.GetNode(r)->path_weight;
+}
+
 void CGame::GraphStep()
 {
 	if (m_eGraphStep == GRAPHSTEP_BEGIN)
@@ -852,6 +860,9 @@ void CGame::GraphStep()
 			}
 		}
 
+		// We made changes to our node weights. Make sure it's still a heap by remaking the heap.
+		std::make_heap(m_aiUnvisitedNodes.begin(), m_aiUnvisitedNodes.end(), smaller_weight);
+
 		m_eGraphStep = GRAPHSTEP_FINDLOWEST;
 	}
 	else if (m_eGraphStep == GRAPHSTEP_FINDLOWEST)
@@ -859,26 +870,17 @@ void CGame::GraphStep()
 		if (!m_aiUnvisitedNodes.size())
 			return;
 
-		float lowest_path_weight = FLT_MAX;
-		int lowest_path_node = -1;
-		int lowest_path_n;
+		std::pop_heap(m_aiUnvisitedNodes.begin(), m_aiUnvisitedNodes.end(), smaller_weight);
 
-		size_t n;
-		for (n = 0; n < m_aiUnvisitedNodes.size(); n++)
-		{
-			if (m_Graph.GetNode(m_aiUnvisitedNodes[n])->path_weight < lowest_path_weight)
-			{
-				lowest_path_node = m_aiUnvisitedNodes[n];
-				lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
-				lowest_path_n = n;
-			}
-		}
+		node_t lowest_path_node = m_aiUnvisitedNodes.back();
+		float lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
+
+		m_aiUnvisitedNodes.pop_back();
 
 		if (lowest_path_node < 0)
 			return;
 
 		m_iCurrentNode = lowest_path_node;
-		m_aiUnvisitedNodes.erase(m_aiUnvisitedNodes.begin()+lowest_path_n);
 		m_Graph.GetNode(m_iCurrentNode)->seen = true;
 
 		if (m_Graph.GetNode(lowest_path_node) == m_pTargetNode)
@@ -936,26 +938,21 @@ void CGame::GraphComplete()
 			}
 		}
 
-		float lowest_path_weight = FLT_MAX;
-		int lowest_path_node = -1;
-		int lowest_path_n;
+		// We made changes to our node weights. Make sure it's still a heap by remaking the heap.
+		std::make_heap(m_aiUnvisitedNodes.begin(), m_aiUnvisitedNodes.end(), smaller_weight);
 
-		size_t n;
-		for (n = 0; n < m_aiUnvisitedNodes.size(); n++)
-		{
-			if (m_Graph.GetNode(m_aiUnvisitedNodes[n])->path_weight < lowest_path_weight)
-			{
-				lowest_path_node = m_aiUnvisitedNodes[n];
-				lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
-				lowest_path_n = n;
-			}
-		}
+		// Pop the smallest item off the heap.
+		std::pop_heap(m_aiUnvisitedNodes.begin(), m_aiUnvisitedNodes.end(), smaller_weight);
+
+		node_t lowest_path_node = m_aiUnvisitedNodes.back();
+		float lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
+
+		m_aiUnvisitedNodes.pop_back();
 
 		if (lowest_path_node < 0)
 			return;
 
 		current_node_index = lowest_path_node;
-		m_aiUnvisitedNodes.erase(m_aiUnvisitedNodes.begin()+lowest_path_n);
 		m_Graph.GetNode(current_node_index)->seen = true;
 
 		if (m_Graph.GetNode(lowest_path_node) == m_pTargetNode)
