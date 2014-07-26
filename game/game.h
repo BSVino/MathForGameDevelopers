@@ -119,15 +119,15 @@ private:
 
 	typedef enum
 	{
-		GRAPHSTEP_PUSHTOSTACK,
-		GRAPHSTEP_PUSHNEIGHBORS,
-		GRAPHSTEP_MARKSEEN,
-		GRAPHSTEP_POPFRONT,
+		GRAPHSTEP_BEGIN,
+		GRAPHSTEP_FINDLOWEST,
+		GRAPHSTEP_CALCULATENEIGHBORS,
 		GRAPHSTEP_RECONSTRUCT,
 	} graph_step_t;
 
 	graph_step_t m_eGraphStep;
-	std::deque<node_t> m_aiNodeStack;
+	node_t m_iCurrentNode;
+	std::vector<node_t> m_aiUnvisitedNodes;
 	std::vector<node_t> m_aiPathStack;
 
 	CGraph m_Graph;

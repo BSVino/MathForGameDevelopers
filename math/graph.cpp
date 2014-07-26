@@ -5,11 +5,12 @@ void CGraph::AddNode()
 	CGraph::nodes.push_back(CNode());
 }
 
-void CGraph::AddEdge(node_t a, node_t b)
+void CGraph::AddEdge(node_t a, node_t b, float weight)
 {
 	edges.push_back(CGraph::CEdge());
 	edges.back().first = a;
 	edges.back().second = b;
+	edges.back().weight = weight;
 
 	nodes[a].edges.push_back(edges.size()-1);
 	nodes[b].edges.push_back(edges.size()-1);

@@ -785,9 +785,10 @@ CCharacter* CGame::GetCharacterIndex(size_t i)
 
 void CGame::GraphReset()
 {
-	m_eGraphStep = GRAPHSTEP_PUSHTOSTACK;
-	m_aiNodeStack.clear();
+	m_eGraphStep = GRAPHSTEP_BEGIN;
+	m_aiUnvisitedNodes.clear();
 	m_aiPathStack.clear();
+	m_iCurrentNode = -1;
 
 	m_Graph = CGraph();
 
@@ -798,13 +799,13 @@ void CGame::GraphReset()
 	m_Graph.AddNode();
 	m_Graph.AddNode();
 
-	m_Graph.AddEdge(0, 3);
-	m_Graph.AddEdge(3, 4);
-	m_Graph.AddEdge(1, 4);
-	m_Graph.AddEdge(0, 1);
-	m_Graph.AddEdge(1, 2);
-	m_Graph.AddEdge(2, 5);
-	m_Graph.AddEdge(4, 5);
+	m_Graph.AddEdge(0, 3, 1);
+	m_Graph.AddEdge(3, 4, 1);
+	m_Graph.AddEdge(1, 4, 1);
+	m_Graph.AddEdge(0, 1, 8);
+	m_Graph.AddEdge(1, 2, 1);
+	m_Graph.AddEdge(2, 5, 1);
+	m_Graph.AddEdge(4, 5, 8);
 
 	m_Graph.GetNode(0)->debug_position = Vector(0, 0, -5) * 4;
 	m_Graph.GetNode(1)->debug_position = Vector(0, 0, -4) * 4;
@@ -818,61 +819,79 @@ void CGame::GraphReset()
 
 void CGame::GraphStep()
 {
-	if (m_eGraphStep == GRAPHSTEP_PUSHTOSTACK)
+	if (m_eGraphStep == GRAPHSTEP_BEGIN)
 	{
-		m_aiNodeStack.push_back(0);
-		m_Graph.GetNode(m_aiNodeStack[0])->seen = true;
-		m_eGraphStep = GRAPHSTEP_PUSHNEIGHBORS;
+		m_iCurrentNode = 0;
+		m_Graph.GetNode(m_iCurrentNode)->seen = true;
+		m_Graph.GetNode(m_iCurrentNode)->path_weight = 0;
+
+		for (int i = 1; i < m_Graph.GetNumNodes(); i++)
+			m_aiUnvisitedNodes.push_back(i);
+
+		m_eGraphStep = GRAPHSTEP_CALCULATENEIGHBORS;
 	}
-	else if (m_eGraphStep == GRAPHSTEP_PUSHNEIGHBORS)
+	else if (m_eGraphStep == GRAPHSTEP_CALCULATENEIGHBORS)
 	{
-		CGraph::CNode* current_node = m_Graph.GetNode(m_aiNodeStack.front());
+		CGraph::CNode* current_node = m_Graph.GetNode(m_iCurrentNode);
 
 		size_t i;
 		for (i = 0; i < current_node->edges.size(); i++)
 		{
 			edge_t edge = current_node->edges[i];
 
-			node_t test_node = m_Graph.FollowEdge(m_aiNodeStack.front(), edge);
-
-			if (m_Graph.GetNode(test_node) == m_pTargetNode)
-			{
-				// We found it! Stash our data for the reconstruct step.
-				m_pTargetNode->path_from = m_aiNodeStack.front();
-				m_aiNodeStack.push_back(test_node);
-
-				m_eGraphStep = GRAPHSTEP_RECONSTRUCT;
-				return;
-			}
+			node_t test_node = m_Graph.FollowEdge(m_iCurrentNode, edge);
 
 			if (m_Graph.GetNode(test_node)->seen)
 				continue;
 
-			// We haven't seen this node. Push it to the stack.
-			m_aiNodeStack.push_back(test_node);
-			m_Graph.GetNode(test_node)->path_from = m_aiNodeStack.front();
+			float weight_through_this_edge = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
+			if (weight_through_this_edge < m_Graph.GetNode(test_node)->path_weight)
+			{
+				m_Graph.GetNode(test_node)->path_weight = weight_through_this_edge;
+				m_Graph.GetNode(test_node)->path_from = m_iCurrentNode;
+			}
 		}
 
-		m_eGraphStep = GRAPHSTEP_MARKSEEN;
+		m_eGraphStep = GRAPHSTEP_FINDLOWEST;
 	}
-	else if (m_eGraphStep == GRAPHSTEP_MARKSEEN)
+	else if (m_eGraphStep == GRAPHSTEP_FINDLOWEST)
 	{
-		// Technically we only need to mark the ones that were just added as seen but this is just sample code.
-		// See below for the actual code where they're only added when seen.
-		for (size_t i = 0; i < m_aiNodeStack.size(); i++)
-			m_Graph.GetNode(m_aiNodeStack[i])->seen = true;
+		if (!m_aiUnvisitedNodes.size())
+			return;
 
-		m_eGraphStep = GRAPHSTEP_POPFRONT;
-	}
-	else if (m_eGraphStep == GRAPHSTEP_POPFRONT)
-	{
-		m_aiNodeStack.pop_front();
+		float lowest_path_weight = FLT_MAX;
+		int lowest_path_node = -1;
+		int lowest_path_n;
 
-		m_eGraphStep = GRAPHSTEP_PUSHNEIGHBORS;
+		size_t n;
+		for (n = 0; n < m_aiUnvisitedNodes.size(); n++)
+		{
+			if (m_Graph.GetNode(m_aiUnvisitedNodes[n])->path_weight < lowest_path_weight)
+			{
+				lowest_path_node = m_aiUnvisitedNodes[n];
+				lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
+				lowest_path_n = n;
+			}
+		}
+
+		if (lowest_path_node < 0)
+			return;
+
+		m_iCurrentNode = lowest_path_node;
+		m_aiUnvisitedNodes.erase(m_aiUnvisitedNodes.begin()+lowest_path_n);
+		m_Graph.GetNode(m_iCurrentNode)->seen = true;
+
+		if (m_Graph.GetNode(lowest_path_node) == m_pTargetNode)
+		{
+			m_eGraphStep = GRAPHSTEP_RECONSTRUCT;
+			return;
+		}
+
+		m_eGraphStep = GRAPHSTEP_CALCULATENEIGHBORS;
 	}
 	else if (m_eGraphStep == GRAPHSTEP_RECONSTRUCT)
 	{
-		node_t current_node = m_aiNodeStack.back();
+		node_t current_node = m_iCurrentNode;
 
 		m_aiPathStack.push_back(current_node);
 
@@ -888,48 +907,69 @@ void CGame::GraphComplete()
 {
 	GraphReset();
 
-	m_aiNodeStack.push_back(0);
-	m_Graph.GetNode(m_aiNodeStack.back())->seen = true;
+	node_t current_node_index = 0;
+	m_Graph.GetNode(current_node_index)->seen = true;
+	m_Graph.GetNode(current_node_index)->path_weight = 0;
 
-	while (true)
+	for (int i = 1; i < m_Graph.GetNumNodes(); i++)
+		m_aiUnvisitedNodes.push_back(i);
+
+	while (m_aiUnvisitedNodes.size())
 	{
-		CGraph::CNode* current_node = m_Graph.GetNode(m_aiNodeStack.front());
+		CGraph::CNode* current_node = m_Graph.GetNode(current_node_index);
 
 		size_t i;
 		for (i = 0; i < current_node->edges.size(); i++)
 		{
 			edge_t edge = current_node->edges[i];
 
-			node_t test_node = m_Graph.FollowEdge(m_aiNodeStack.front(), edge);
-			if (m_Graph.GetNode(test_node) == m_pTargetNode)
-			{
-				// We're done!
-				m_pTargetNode->path_from = m_aiNodeStack.front();
-
-				node_t current_node = test_node;
-
-				m_aiPathStack.push_back(current_node);
-
-				// Now we reconstruct the path.
-				while (m_Graph.GetNode(current_node)->path_from != ~0)
-				{
-					current_node = m_Graph.GetNode(current_node)->path_from;
-					m_aiPathStack.push_back(current_node);
-				}
-
-				return;
-			}
+			node_t test_node = m_Graph.FollowEdge(current_node_index, edge);
 
 			if (m_Graph.GetNode(test_node)->seen)
 				continue;
 
-			// We haven't seen this node. Push it to the stack.
-			m_aiNodeStack.push_back(test_node);
-			m_Graph.GetNode(test_node)->seen = true;
-			m_Graph.GetNode(test_node)->path_from = m_aiNodeStack.front();
+			float weight_through_this_edge = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
+			if (weight_through_this_edge < m_Graph.GetNode(test_node)->path_weight)
+			{
+				m_Graph.GetNode(test_node)->path_weight = weight_through_this_edge;
+				m_Graph.GetNode(test_node)->path_from = current_node_index;
+			}
 		}
 
-		m_aiNodeStack.pop_front();
+		float lowest_path_weight = FLT_MAX;
+		int lowest_path_node = -1;
+		int lowest_path_n;
+
+		size_t n;
+		for (n = 0; n < m_aiUnvisitedNodes.size(); n++)
+		{
+			if (m_Graph.GetNode(m_aiUnvisitedNodes[n])->path_weight < lowest_path_weight)
+			{
+				lowest_path_node = m_aiUnvisitedNodes[n];
+				lowest_path_weight = m_Graph.GetNode(lowest_path_node)->path_weight;
+				lowest_path_n = n;
+			}
+		}
+
+		if (lowest_path_node < 0)
+			return;
+
+		current_node_index = lowest_path_node;
+		m_aiUnvisitedNodes.erase(m_aiUnvisitedNodes.begin()+lowest_path_n);
+		m_Graph.GetNode(current_node_index)->seen = true;
+
+		if (m_Graph.GetNode(lowest_path_node) == m_pTargetNode)
+		{
+			m_aiPathStack.push_back(current_node_index);
+
+			while (m_Graph.GetNode(current_node_index)->path_from != ~0)
+			{
+				current_node_index = m_Graph.GetNode(current_node_index)->path_from;
+				m_aiPathStack.push_back(current_node_index);
+			}
+
+			return;
+		}
 	}
 }
 
@@ -942,17 +982,22 @@ void CGame::GraphDraw()
 		CGraph::CNode* node = m_Graph.GetNode(i);
 
 		{
-			if (m_aiNodeStack.size() && m_aiNodeStack.front() == i)
+			if (m_iCurrentNode == i)
 				c.SetUniform("vecColor", Color(0, 255, 0, 255));
 			else if (node == m_pTargetNode)
 				c.SetUniform("vecColor", Color(255, 120, 0, 255));
+			else if (node->path_weight < FLT_MAX)
+			{
+				int r = (int)Remap(node->path_weight, 0, 10, 50, 255);
+				c.SetUniform("vecColor", Color(r, 50, 50, 255));
+			}
 			else
 			{
 				c.SetUniform("vecColor", Color(255, 255, 255, 255));
 
-				for (size_t j = 0; j < m_aiNodeStack.size(); j++)
+				for (size_t j = 0; j < m_aiUnvisitedNodes.size(); j++)
 				{
-					if (m_aiNodeStack[j] == i)
+					if (m_aiUnvisitedNodes[j] == i)
 					{
 						c.SetUniform("vecColor", Color(0, 0, 255, 255));
 						break;
@@ -995,9 +1040,9 @@ void CGame::GraphDraw()
 		}
 
 		if (in_path)
-			c.SetUniform("vecColor", Color(255, 0, 0, 255));
+			c.SetUniform("vecColor", Color(0, 0, 255, 255));
 		else
-			c.SetUniform("vecColor", Color(0, 0, 0, 255));
+			c.SetUniform("vecColor", Color((int)Remap(edge->weight, 1, 8, 0, 255), 0, 0, 255));
 
 		c.BeginRenderLines();
 			c.Vertex(node1->debug_position + Vector(0, 0.1f, 0));
