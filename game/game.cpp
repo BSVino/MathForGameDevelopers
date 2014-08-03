@@ -804,10 +804,10 @@ void CGame::GraphReset()
 	m_Graph.AddEdge(0, 3, 1);
 	m_Graph.AddEdge(3, 4, 1);
 	m_Graph.AddEdge(1, 4, 1);
-	m_Graph.AddEdge(0, 1, 8);
+	m_Graph.AddEdge(0, 1, 1);
 	m_Graph.AddEdge(1, 2, 1);
 	m_Graph.AddEdge(2, 5, 1);
-	m_Graph.AddEdge(4, 5, 8);
+	m_Graph.AddEdge(4, 5, 1);
 
 	m_Graph.GetNode(0)->debug_position = Vector(0, 0, -5) * 4;
 	m_Graph.GetNode(1)->debug_position = Vector(0, 0, -4) * 4;
@@ -816,7 +816,7 @@ void CGame::GraphReset()
 	m_Graph.GetNode(4)->debug_position = Vector(1, 0, -4) * 4;
 	m_Graph.GetNode(5)->debug_position = Vector(1, 0, -3) * 4;
 
-	m_pTargetNode = m_Graph.GetNode(5);
+	m_pTargetNode = m_Graph.GetNode(2);
 }
 
 bool smaller_weight(const node_t& l, const node_t& r)
@@ -852,10 +852,14 @@ void CGame::GraphStep()
 			if (m_Graph.GetNode(test_node)->seen)
 				continue;
 
-			float weight_through_this_edge = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
-			if (weight_through_this_edge < m_Graph.GetNode(test_node)->path_weight)
+			float g_weight = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
+			float h_weight = (m_Graph.GetNode(test_node)->debug_position - m_pTargetNode->debug_position).Length();
+
+			float f_weight = g_weight + h_weight;
+
+			if (f_weight < m_Graph.GetNode(test_node)->path_weight)
 			{
-				m_Graph.GetNode(test_node)->path_weight = weight_through_this_edge;
+				m_Graph.GetNode(test_node)->path_weight = f_weight;
 				m_Graph.GetNode(test_node)->path_from = m_iCurrentNode;
 			}
 		}
@@ -930,10 +934,14 @@ void CGame::GraphComplete()
 			if (m_Graph.GetNode(test_node)->seen)
 				continue;
 
-			float weight_through_this_edge = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
-			if (weight_through_this_edge < m_Graph.GetNode(test_node)->path_weight)
+			float g_weight = m_Graph.GetEdge(edge)->weight + current_node->path_weight;
+			float h_weight = (m_Graph.GetNode(test_node)->debug_position - m_pTargetNode->debug_position).Length();
+
+			float f_weight = g_weight + h_weight;
+
+			if (f_weight < m_Graph.GetNode(test_node)->path_weight)
 			{
-				m_Graph.GetNode(test_node)->path_weight = weight_through_this_edge;
+				m_Graph.GetNode(test_node)->path_weight = f_weight;
 				m_Graph.GetNode(test_node)->path_from = current_node_index;
 			}
 		}
