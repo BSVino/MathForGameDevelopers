@@ -88,6 +88,8 @@ public:
 
 	float     m_flShotTime;
 
+	float     m_flDistanceTraveled;
+
 private:
 	// If we have a move parent then we only use the local coordinates.
 	// Otherwise we'll only use the global coordinates. Use the functions

@@ -257,6 +257,8 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 // http://www.youtube.com/watch?v=c4b9lCfSDQM
 void CGame::Update(float dt)
 {
+	Vector x0 = m_hPlayer->GetGlobalOrigin();
+
 	// The approach function http://www.youtube.com/watch?v=qJq7I2DLGzI
 	m_hPlayer->m_vecMovement.x = Approach(m_hPlayer->m_vecMovementGoal.x, m_hPlayer->m_vecMovement.x, dt * 65);
 	m_hPlayer->m_vecMovement.z = Approach(m_hPlayer->m_vecMovementGoal.z, m_hPlayer->m_vecMovement.z, dt * 65);
@@ -304,6 +306,14 @@ void CGame::Update(float dt)
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
 	m_hPlayer->SetGlobalTransform(mPlayerTranslation * mPlayerRotation * mPlayerScaling);
+
+	Vector x1 = m_hPlayer->GetGlobalOrigin();
+	float flPlayerDistanceTraveled = m_hPlayer->m_flDistanceTraveled;
+
+	// Add the distance traveled this frame.
+	flPlayerDistanceTraveled += (x1 - x0).Length();
+
+	m_hPlayer->m_flDistanceTraveled = flPlayerDistanceTraveled;
 
 	float flMonsterSpeed = 0.5f;
 	for (size_t i = 0; i < MAX_CHARACTERS; i++)
@@ -793,30 +803,6 @@ void CGame::GraphReset()
 	m_iCurrentNode = -1;
 
 	m_Graph = CGraph();
-
-	m_Graph.AddNode();
-	m_Graph.AddNode();
-	m_Graph.AddNode();
-	m_Graph.AddNode();
-	m_Graph.AddNode();
-	m_Graph.AddNode();
-
-	m_Graph.AddEdge(0, 3, 1);
-	m_Graph.AddEdge(3, 4, 1);
-	m_Graph.AddEdge(1, 4, 1);
-	m_Graph.AddEdge(0, 1, 1);
-	m_Graph.AddEdge(1, 2, 1);
-	m_Graph.AddEdge(2, 5, 1);
-	m_Graph.AddEdge(4, 5, 1);
-
-	m_Graph.GetNode(0)->debug_position = Vector(0, 0, -5) * 4;
-	m_Graph.GetNode(1)->debug_position = Vector(0, 0, -4) * 4;
-	m_Graph.GetNode(2)->debug_position = Vector(0, 0, -3) * 4;
-	m_Graph.GetNode(3)->debug_position = Vector(1, 0, -5) * 4;
-	m_Graph.GetNode(4)->debug_position = Vector(1, 0, -4) * 4;
-	m_Graph.GetNode(5)->debug_position = Vector(1, 0, -3) * 4;
-
-	m_pTargetNode = m_Graph.GetNode(2);
 }
 
 bool smaller_weight(const node_t& l, const node_t& r)

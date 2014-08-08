@@ -19,6 +19,30 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 int main(int argc, char* argv[])
 {
+	// A simple summation.
+
+	float distance = 0;
+	for (int n = 0; n < 100; n++)
+	{
+		float random = ((float)(rand()%1000)/100 + 50); // Gives us a random amount between 50 and 60.
+		distance += random;
+	}
+
+	printf("Total distance traveled: %f\n", distance);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// Create a game
 	CGame game(argc, argv);
 
