@@ -117,6 +117,14 @@ private:
 	size_t m_iMeshVB;
 	size_t m_iMeshSize;
 
+	float m_projectile_initial_time;
+	Vector m_projectile_position;
+	Vector m_projectile_velocity;
+	Vector m_projectile_gravity;
+
+	Vector m_projectile_initial_position;
+	Vector m_projectile_initial_velocity;
+
 public:
 	typedef enum
 	{

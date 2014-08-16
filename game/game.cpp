@@ -48,6 +48,15 @@ void CGame::Load()
 	m_iNormalTexture = GetRenderer()->LoadTextureIntoGL("normal.png");
 
 	GraphReset();
+
+	m_projectile_initial_time = 0;
+	m_projectile_initial_position = Vector(2, 1, 2);
+	m_projectile_initial_velocity = Vector(-1, 3, -1) * 5;
+	m_projectile_gravity = Vector(0, -5, 0);
+
+	// Fire the first one
+	m_projectile_position = m_projectile_initial_position;
+	m_projectile_velocity = m_projectile_initial_velocity;
 }
 
 void CGame::MakePuff(const Point& p)
@@ -330,6 +339,22 @@ void CGame::Update(float dt)
 
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
+
+	if (Game()->GetTime() >= m_projectile_initial_time + 6)
+	{
+		m_projectile_position = m_projectile_initial_position;
+		m_projectile_velocity = m_projectile_initial_velocity = Vector((float)(rand()%1000)/250-2, 2.5, (float)(rand()%1000)/250-2) * 5;
+		m_projectile_initial_time = Game()->GetTime();
+	}
+
+	// Simulate the projectile
+	m_projectile_position = m_projectile_position + m_projectile_velocity * dt;
+	m_projectile_velocity = m_projectile_velocity + m_projectile_gravity * dt;
+}
+
+Vector PredictProjectileAtTime(float t, Vector v0, Vector x0, Vector g)
+{
+	return g * (0.5f * t * t) + v0 * t + x0;
 }
 
 void CGame::Draw()
@@ -493,6 +518,24 @@ void CGame::Draw()
 	}
 
 	GraphDraw();
+
+	r.SetUniform("vecColor", Color(0, 0, 0, 255));
+	r.RenderBox(m_projectile_position - Vector(1, 1, 1)*0.4f, m_projectile_position + Vector(1, 1, 1)*0.4f);
+
+	r.SetUniform("vecColor", Vector4D(1, 0, 0, 1));
+	for (int i = 0; i < 100; i++)
+	{
+		float time_0 = (float)i * 0.2f;
+		float time_1 = (float)(i+1) * 0.2f;
+
+		Vector x_0 = PredictProjectileAtTime(time_0, m_projectile_initial_velocity, m_projectile_initial_position, m_projectile_gravity);
+		Vector x_1 = PredictProjectileAtTime(time_1, m_projectile_initial_velocity, m_projectile_initial_position, m_projectile_gravity);
+
+		r.BeginRenderLines();
+			r.Vertex(x_0);
+			r.Vertex(x_1);
+		r.EndRender();
+	}
 
 	pRenderer->FinishRendering(&r);
 
