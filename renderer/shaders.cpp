@@ -238,15 +238,18 @@ void CShaderLibrary::WriteLog(const string& sFile, const char* pszLog, const cha
 		m_bLogNeedsClearing = false;
 	}
 
-	char szText[100];
-	strncpy(szText, pszShaderText, 99);
-	szText[99] = '\0';
-
 	FILE* fp = tfopen(sLogFile, "a");
 	fprintf(fp, ("Shader compile output for file: " + sFile + " timestamp: %d\n").c_str(), (int)time(NULL));
 	fprintf(fp, "%s\n\n", pszLog);
-	fprintf(fp, "%s...\n\n", szText);
-	fclose(fp);
+	fprintf(fp, "Shader text follows:\n\n");
+
+	vector<string> asTokens;
+	explode(pszShaderText, asTokens, "\n");
+
+	for (size_t i = 0; i < asTokens.size(); i++)
+		fprintf(fp, "%d: %s\n", i, asTokens[i].c_str());
+
+	fprintf(fp, "\n\n");
 }
 
 CShader* CShaderLibrary::GetShader(const string& sName)
