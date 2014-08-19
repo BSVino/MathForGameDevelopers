@@ -250,6 +250,7 @@ void CShaderLibrary::WriteLog(const string& sFile, const char* pszLog, const cha
 		fprintf(fp, "%d: %s\n", i, asTokens[i].c_str());
 
 	fprintf(fp, "\n\n");
+	fclose(fp);
 }
 
 CShader* CShaderLibrary::GetShader(const string& sName)
