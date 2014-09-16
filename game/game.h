@@ -117,9 +117,12 @@ private:
 	size_t m_iMeshVB;
 	size_t m_iMeshSize;
 
+#define MAX_PROJECTILES 8
 	float m_projectile_initial_time;
-	Vector m_projectile_position;
-	Vector m_projectile_velocity;
+	float m_projectile_break_time;
+	int m_projectile_number;
+	Vector m_projectile_position[MAX_PROJECTILES];
+	Vector m_projectile_velocity[MAX_PROJECTILES];
 	Vector m_projectile_gravity;
 
 	Vector m_projectile_initial_position;

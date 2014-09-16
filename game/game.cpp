@@ -25,6 +25,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <math/frustum.h>
 #include <maths.h>
 #include <math/quaternion.h>
+#include <math/physics.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderingcontext.h>
@@ -49,14 +50,16 @@ void CGame::Load()
 
 	GraphReset();
 
-	m_projectile_initial_time = 0;
+	m_projectile_initial_time = Game()->GetTime();
 	m_projectile_initial_position = Vector(2, 1, 2);
 	m_projectile_initial_velocity = Vector(-1, 3, -1) * 5;
 	m_projectile_gravity = Vector(0, -5, 0);
+	m_projectile_break_time = Game()->GetTime() + PredictProjectileMaximumHeightTime(m_projectile_initial_velocity, m_projectile_gravity);
+	m_projectile_number = 1;
 
 	// Fire the first one
-	m_projectile_position = m_projectile_initial_position;
-	m_projectile_velocity = m_projectile_initial_velocity;
+	m_projectile_position[0] = m_projectile_initial_position;
+	m_projectile_velocity[0] = m_projectile_initial_velocity;
 }
 
 void CGame::MakePuff(const Point& p)
@@ -340,21 +343,37 @@ void CGame::Update(float dt)
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
 
-	if (Game()->GetTime() >= m_projectile_initial_time + 6)
+	if (Game()->GetTime() >= m_projectile_initial_time + 8)
 	{
-		m_projectile_position = m_projectile_initial_position;
-		m_projectile_velocity = m_projectile_initial_velocity = Vector((float)(rand()%1000)/250-2, 2.5, (float)(rand()%1000)/250-2) * 5;
+		m_projectile_position[0] = m_projectile_initial_position;
+		m_projectile_velocity[0] = m_projectile_initial_velocity = Vector((float)(rand()%1000)/250-2, 2.5, (float)(rand()%1000)/250-2) * 5;
 		m_projectile_initial_time = Game()->GetTime();
+		m_projectile_break_time = Game()->GetTime() + PredictProjectileMaximumHeightTime(m_projectile_initial_velocity, m_projectile_gravity);
+		m_projectile_number = 1;
+	}
+
+	if (Game()->GetTime() >= m_projectile_break_time && m_projectile_number == 1)
+	{
+		for (int i = 1; i < MAX_PROJECTILES; i++)
+		{
+			m_projectile_position[i] = m_projectile_position[0];
+			m_projectile_velocity[i] = m_projectile_velocity[0] + Vector((float)(rand()%1000)/250-2, (float)(rand()%1000)/250-2, (float)(rand()%1000)/250-2);
+		}
+		m_projectile_number = MAX_PROJECTILES;
 	}
 
 	// Simulate the projectile
-	m_projectile_position = m_projectile_position + m_projectile_velocity * dt;
-	m_projectile_velocity = m_projectile_velocity + m_projectile_gravity * dt;
-}
+	for (int i = 0; i < m_projectile_number; i++)
+	{
+		m_projectile_position[i] = m_projectile_position[i] + m_projectile_velocity[i] * dt;
+		m_projectile_velocity[i] = m_projectile_velocity[i] + m_projectile_gravity * dt;
 
-Vector PredictProjectileAtTime(float t, Vector v0, Vector x0, Vector g)
-{
-	return g * (0.5f * t * t) + v0 * t + x0;
+		if (m_projectile_position[i].y < 0)
+		{
+			MakePuff(m_projectile_position[i]);
+			m_projectile_position[i].y = 9999999; // Move it way up high and out of sight until it gets reset. Sort of a hack, no big deal.
+		}
+	}
 }
 
 void CGame::Draw()
@@ -505,7 +524,7 @@ void CGame::Draw()
 			float flTimeCreated = Game()->GetPuffs()[i].flTimeCreated;
 			float flTimeOver = Game()->GetPuffs()[i].flTimeCreated + flPuffTime;
 			float flStartSize = 0.2f;
-			float flEndSize = 0.5f;
+			float flEndSize = 2.0f;
 
 			float flSize = Remap(Game()->GetTime(), flTimeCreated, flTimeOver, flStartSize, flEndSize);
 
@@ -519,8 +538,11 @@ void CGame::Draw()
 
 	GraphDraw();
 
-	r.SetUniform("vecColor", Color(0, 0, 0, 255));
-	r.RenderBox(m_projectile_position - Vector(1, 1, 1)*0.4f, m_projectile_position + Vector(1, 1, 1)*0.4f);
+	for (int i = 0; i < m_projectile_number; i++)
+	{
+		r.SetUniform("vecColor", Color(0, 0, 0, 255));
+		r.RenderBox(m_projectile_position[i] - Vector(1, 1, 1)*0.4f, m_projectile_position[i] + Vector(1, 1, 1)*0.4f);
+	}
 
 	r.SetUniform("vecColor", Vector4D(1, 0, 0, 1));
 	for (int i = 0; i < 100; i++)
