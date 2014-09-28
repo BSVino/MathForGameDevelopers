@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	CGame game(argc, argv);
 
 	// Open the game's window
-	game.OpenWindow(640, 480, false, false);
+	game.OpenWindow(1000, 564, false, false);
 	game.SetMouseCursorEnabled(false);
 
 	game.Load();
