@@ -67,6 +67,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common\mtrand.cpp" />
     <ClCompile Include="common\platform_win32.cpp" />
     <ClCompile Include="datamanager\data.cpp" />
     <ClCompile Include="datamanager\dataserializer.cpp" />

@@ -15,42 +15,16 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "game.h"
+#ifndef _MTRAND_H
+#define _MTRAND_H
 
-#include "mtrand.h"
+#ifdef __GNUC__
+#include <stddef.h>
+#endif
 
-int main(int argc, char* argv[])
-{
-	mtsrand(1);
+void mtsrand(size_t iSeed);
+size_t mtrand();
 
-	for (int i = 0; i < 100; i++)
-	{
-		size_t r = mtrand();
-		size_t r2 = (r%100) + 1;
-		printf("%.2d ", r2);
-	}
+#define MTRAND_MAX ((size_t)~0)
 
-	return 0;
-
-
-
-
-
-
-
-
-
-	// Create a game
-	CGame game(argc, argv);
-
-	// Open the game's window
-	game.OpenWindow(1000, 564, false, false);
-	game.SetMouseCursorEnabled(false);
-
-	game.Load();
-
-	// Run the game loop!
-	game.GameLoop();
-
-	return 0;
-}
+#endif

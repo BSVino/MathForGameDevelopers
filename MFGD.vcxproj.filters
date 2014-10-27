@@ -99,6 +99,9 @@
     <ClCompile Include="math\graph.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="common\mtrand.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libglfw.lib">

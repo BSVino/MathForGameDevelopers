@@ -15,42 +15,47 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "game.h"
-
 #include "mtrand.h"
 
-int main(int argc, char* argv[])
-{
-	mtsrand(1);
+#define MT_SIZE 624
+static size_t g_aiMT[MT_SIZE];
+static size_t g_iMTI = 0;
 
-	for (int i = 0; i < 100; i++)
+// Mersenne Twister implementation from Wikipedia.
+void mtsrand(size_t iSeed)
+{
+	g_aiMT[0] = iSeed;
+	for (size_t i = 1; i < MT_SIZE; i++)
 	{
-		size_t r = mtrand();
-		size_t r2 = (r%100) + 1;
-		printf("%.2d ", r2);
+		size_t inner1 = g_aiMT[i-1];
+		size_t inner2 = (g_aiMT[i-1]>>30);
+		size_t inner = inner1 ^ inner2;
+		g_aiMT[i] = (0x6c078965 * inner) + i;
 	}
 
-	return 0;
+	g_iMTI = 0;
+}
 
+size_t mtrand()
+{
+	if (g_iMTI == 0)
+	{
+		for (size_t i = 0; i < MT_SIZE; i++)
+		{
+			size_t y = (0x80000000&(g_aiMT[i])) + (0x7fffffff&(g_aiMT[(i+1) % MT_SIZE]));
+			g_aiMT[i] = g_aiMT[(i + 397)%MT_SIZE] ^ (y>>1);
+			if ((y%2) == 1)
+				g_aiMT[i] = g_aiMT[i] ^ 0x9908b0df;
+		}
+	}
 
+	size_t y = g_aiMT[g_iMTI];
+	y = y ^ (y >> 11);
+	y = y ^ ((y << 7) & (0x9d2c5680));
+	y = y ^ ((y << 15) & (0xefc60000));
+	y = y ^ (y >> 18);
 
+	g_iMTI = (g_iMTI + 1) % MT_SIZE;
 
-
-
-
-
-
-	// Create a game
-	CGame game(argc, argv);
-
-	// Open the game's window
-	game.OpenWindow(1000, 564, false, false);
-	game.SetMouseCursorEnabled(false);
-
-	game.Load();
-
-	// Run the game loop!
-	game.GameLoop();
-
-	return 0;
+	return y;
 }
