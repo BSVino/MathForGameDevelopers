@@ -19,14 +19,17 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "mtrand.h"
 
+#define srand mtsrand
+#define rand mtrand
+
 int main(int argc, char* argv[])
 {
-	mtsrand(1);
+	srand(42);
 
 	for (int i = 0; i < 100; i++)
 	{
-		size_t r = mtrand();
-		size_t r2 = (r%100) + 1;
+		size_t r = rand();
+		size_t r2 = r%100+1;
 		printf("%.2d ", r2);
 	}
 
