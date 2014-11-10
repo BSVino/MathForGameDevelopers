@@ -24,14 +24,39 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 int main(int argc, char* argv[])
 {
-	srand(42);
+	srand(0);
 
-	for (int i = 0; i < 100; i++)
+	int trials = 1000000;
+	int results = 0;
+
+	for (int i = 0; i < trials; i++)
 	{
-		size_t r = rand();
-		size_t r2 = r%100+1;
-		printf("%.2d ", r2);
+		if (rand()%6 == 0 && rand()%6 == 0)
+			results += 1;
 	}
+
+	float probability = (float)results / trials;
+	printf("Experimental probability of snake eyes: ~%f\n", probability);
+	printf("Expected probability of snake eyes: %f\n", 1.0f/36.0f);
+
+	printf("\n");
+
+
+
+	results = 0;
+
+	for (int i = 0; i < trials; i++)
+	{
+		if (rand()%6 == 0 || rand()%6 == 0)
+			results += 1;
+	}
+
+	probability = (float)results / trials;
+	printf("Experimental probability of rolling a 1: ~%f\n", probability);
+	printf("Expected probability of rolling a 1: %f\n", 11.0f/36.0f);
+
+
+
 
 	return 0;
 
