@@ -21,6 +21,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <algorithm>
 
+#include <mtrand.h>
 #include <math/collision.h>
 #include <math/frustum.h>
 #include <maths.h>
@@ -538,27 +539,6 @@ void CGame::Draw()
 
 	GraphDraw();
 
-	for (int i = 0; i < m_projectile_number; i++)
-	{
-		r.SetUniform("vecColor", Color(0, 0, 0, 255));
-		r.RenderBox(m_projectile_position[i] - Vector(1, 1, 1)*0.4f, m_projectile_position[i] + Vector(1, 1, 1)*0.4f);
-	}
-
-	r.SetUniform("vecColor", Vector4D(1, 0, 0, 1));
-	for (int i = 0; i < 100; i++)
-	{
-		float time_0 = (float)i * 0.2f;
-		float time_1 = (float)(i+1) * 0.2f;
-
-		Vector x_0 = PredictProjectileAtTime(time_0, m_projectile_initial_velocity, m_projectile_initial_position, m_projectile_gravity);
-		Vector x_1 = PredictProjectileAtTime(time_1, m_projectile_initial_velocity, m_projectile_initial_position, m_projectile_gravity);
-
-		r.BeginRenderLines();
-			r.Vertex(x_0);
-			r.Vertex(x_1);
-		r.EndRender();
-	}
-
 	pRenderer->FinishRendering(&r);
 
 	// Call this last. Your rendered stuff won't appear on the screen until you call this.
@@ -750,33 +730,46 @@ void CGame::GameLoop()
 	Vector vecPropMin = Vector(-1, 0, -1);
 	Vector vecPropMax = Vector(1, 2, 1);
 
-	CCharacter* pProp1 = CreateCharacter();
-	pProp1->SetTransform(Vector(1, 1, 1), 20, Vector(0, 1, 0), Vector(18, 0, 10));
-	pProp1->m_aabbSize.vecMin = vecPropMin;
-	pProp1->m_aabbSize.vecMax = vecPropMax;
-	pProp1->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-	pProp1->m_iTexture = m_iCrateTexture;
+	mtsrand(4);
 
-	CCharacter* pProp2 = CreateCharacter();
-	pProp2->SetTransform(Vector(1, 1, 1), 30, Vector(0, 1, 0), Vector(10, 0, 15));
-	pProp2->m_aabbSize.vecMin = vecPropMin;
-	pProp2->m_aabbSize.vecMax = vecPropMax;
-	pProp2->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-	pProp2->m_iTexture = m_iCrateTexture;
+	/*for (int i = 0; i < 20; i++)
+	{
+		CCharacter* pProp = CreateCharacter();
+		pProp->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(Remap((float)mtrand(), 0, (float)MTRAND_MAX, -20, 20), 0, Remap((float)mtrand(), 0, (float)MTRAND_MAX, -20, 20)));
+		pProp->m_aabbSize.vecMin = vecPropMin;
+		pProp->m_aabbSize.vecMax = vecPropMax;
+		pProp->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+		pProp->m_iTexture = m_iCrateTexture;
+	}*/
 
-	CCharacter* pProp3 = CreateCharacter();
-	pProp3->SetTransform(Vector(1, 1, 1), -30, Vector(0, 1, 0), Vector(11, 0, 8));
-	pProp3->m_aabbSize.vecMin = vecPropMin;
-	pProp3->m_aabbSize.vecMax = vecPropMax;
-	pProp3->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-	pProp3->m_iTexture = m_iCrateTexture;
+	float entire_size = 20 - (-20);
+	float cell_size = entire_size / 5;
 
-	CCharacter* pProp4 = CreateCharacter();
-	pProp4->SetTransform(Vector(1, 1, 1), 40, Vector(0, 1, 0), Vector(-2, 0, 14));
-	pProp4->m_aabbSize.vecMin = vecPropMin;
-	pProp4->m_aabbSize.vecMax = vecPropMax;
-	pProp4->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-	pProp4->m_iTexture = m_iCrateTexture;
+	for (int i = 0; i < 5; i++)
+	{
+		float x_min = -20 + cell_size * i;
+		float x_max = -20 + cell_size * (i+1);
+
+		x_min += 1;
+		x_max -= 1;
+
+		for (int j = 0; j < 5; j++)
+		{
+			float y_min = -20 + cell_size * j;
+			float y_max = -20 + cell_size * (j+1);
+
+			y_min += 1;
+			y_max -= 1;
+
+			CCharacter* pProp = CreateCharacter();
+			pProp->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0),
+				Vector(Remap((float)mtrand(), 0, (float)MTRAND_MAX, x_min, x_max), 0, Remap((float)mtrand(), 0, (float)MTRAND_MAX, y_min, y_max)));
+			pProp->m_aabbSize.vecMin = vecPropMin;
+			pProp->m_aabbSize.vecMax = vecPropMax;
+			pProp->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
+			pProp->m_iTexture = m_iCrateTexture;
+		}
+	}
 
 	CRenderingContext c(GetRenderer());
 	c.RenderBox(Vector(-1, 0, -1), Vector(1, 2, 1));
