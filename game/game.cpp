@@ -727,48 +727,28 @@ void CGame::GameLoop()
 	pTarget3->m_bEnemyAI = true;
 	pTarget3->m_bTakesDamage = true;*/
 
-	Vector vecPropMin = Vector(-1, 0, -1);
-	Vector vecPropMax = Vector(1, 2, 1);
+	Vector vecPropMin = Vector(-.1f, 0, -.1f);
+	Vector vecPropMax = Vector(.1f, .2f, .1f);
 
-	mtsrand(4);
+	mtsrand(0);
 
-	/*for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 800; i++)
 	{
+		float rand1 = (float)(mtrand()%1000)/1000; // [0, 1]
+		float rand2 = (float)(mtrand()%1000)/1000; // [0, 1]
+
+		float theta = rand1 * 2.0f * (float)M_PI;
+		float radius = sqrt(rand2);
+
+		Vector position = Vector(radius * cos(theta), 0, radius * sin(theta));
+		position = position * 50;
+
 		CCharacter* pProp = CreateCharacter();
-		pProp->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector(Remap((float)mtrand(), 0, (float)MTRAND_MAX, -20, 20), 0, Remap((float)mtrand(), 0, (float)MTRAND_MAX, -20, 20)));
+		pProp->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), position);
 		pProp->m_aabbSize.vecMin = vecPropMin;
 		pProp->m_aabbSize.vecMax = vecPropMax;
 		pProp->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 		pProp->m_iTexture = m_iCrateTexture;
-	}*/
-
-	float entire_size = 20 - (-20);
-	float cell_size = entire_size / 5;
-
-	for (int i = 0; i < 5; i++)
-	{
-		float x_min = -20 + cell_size * i;
-		float x_max = -20 + cell_size * (i+1);
-
-		x_min += 1;
-		x_max -= 1;
-
-		for (int j = 0; j < 5; j++)
-		{
-			float y_min = -20 + cell_size * j;
-			float y_max = -20 + cell_size * (j+1);
-
-			y_min += 1;
-			y_max -= 1;
-
-			CCharacter* pProp = CreateCharacter();
-			pProp->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0),
-				Vector(Remap((float)mtrand(), 0, (float)MTRAND_MAX, x_min, x_max), 0, Remap((float)mtrand(), 0, (float)MTRAND_MAX, y_min, y_max)));
-			pProp->m_aabbSize.vecMin = vecPropMin;
-			pProp->m_aabbSize.vecMax = vecPropMax;
-			pProp->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
-			pProp->m_iTexture = m_iCrateTexture;
-		}
 	}
 
 	CRenderingContext c(GetRenderer());
