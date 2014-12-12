@@ -17,8 +17,49 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "game.h"
 
+#ifdef _WIN32
+#include "sys/timeb.h"
+#endif
+
 int main(int argc, char* argv[])
 {
+	struct timeb t1, t2;
+
+	ftime(&t1);
+
+	long sum;
+	for (int n = 0; n < 1000000000; n++)
+	{
+		sum = 0;
+		for (int i = 0; i < 1000; i++)
+			sum += i;
+	}
+
+	ftime(&t2);
+
+	long elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
+
+	printf("Result: %d\n", sum);
+	printf("Elapsed: %dms\n", elapsed_ms);
+
+
+
+
+
+
+	return 0;
+
+
+
+
+
+
+
+
+
+
+
+
 	// Create a game
 	CGame game(argc, argv);
 
