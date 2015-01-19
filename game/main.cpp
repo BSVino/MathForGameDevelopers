@@ -28,77 +28,52 @@ int main(int argc, char* argv[])
 {
 	mtsrand(0);
 
-	int players = 100000;
-	vector<int> scores1;
-	scores1.reserve(players);
-
-	for (int n = 0; n < players; n++)
-		scores1.push_back((int)abs((int)mtrand()));
-
-	vector<int> scores2 = scores1;
-
-	vector<int> scores_sorted;
-	scores_sorted.reserve(players);
-
-
-
-
 	struct timeb t1, t2;
+
+	int a = (int)abs((int)mtrand());
+	int b = (int)abs((int)mtrand()%100);
 
 	ftime(&t1);
 
-	// Insertion sort
+	int sum = 0;
+	for (int i = 0; i < 10; i++)
 	{
-		while (scores1.size()) // While the list of scores is not empty
-		{
-			// Find the highest score (look at every bit of data in the scores list)
-			int highest = -1;
-			for (size_t i = 0; i < scores1.size(); i++)
-			{
-				if (highest < 0 || scores1[i] > scores1[highest])
-					highest = i;
-			}
+		int q = 0;
+		while (q*b + b <= a)
+			q = q + 1;
 
-			// Add it to the end of the sorted array
-			scores_sorted.push_back(scores1[highest]);
-
-			// Remove it from the input array
-			scores1.erase(scores1.begin()+highest, scores1.begin()+highest+1);
-		}
+		sum += q;
 	}
 
 	ftime(&t2);
 
 	long elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
 
-	printf("Highest score: %d\n", scores_sorted[0]);
-	printf("Insertion sort time: %dms\n", elapsed_ms);
+	printf("Sum: %d\n", sum);
+	printf("Normal time: %dms\n", elapsed_ms);
 
-
-	scores_sorted.clear();
 
 	ftime(&t1);
 
-	// Heap sort
+	sum = 0;
+	for (int i = 0; i < 10; i++)
 	{
-		// Build a heap from the scores (every item is bigger than the items below it
-		std::make_heap(scores2.begin(), scores2.end());
+		int q = 0;
+		while (q*b + b <= a)
+			q = q + 2;
 
-		// While the input list still has items
-		while (scores2.size())
-		{
-			std::pop_heap(scores2.begin(), scores2.end());
-			scores_sorted.push_back(scores2.back());
-			scores2.pop_back();
-		}
+		while (q*b > a)
+			q = q - 1;
+
+		sum += q;
 	}
 
 	ftime(&t2);
 
 	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
 
-	printf("Highest score: %d\n", scores_sorted[0]);
-	printf("Heap sort time: %dms\n", elapsed_ms);
+	printf("Sum: %d\n", sum);
+	printf("2x unroll time: %dms\n", elapsed_ms);
 
 
 
