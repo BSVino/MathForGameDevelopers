@@ -30,53 +30,65 @@ int main(int argc, char* argv[])
 
 	struct timeb t1, t2;
 
-	int a = (int)abs((int)mtrand());
-	int b = (int)abs((int)mtrand()%100);
+	printf("Initializing test values...\n\n");
 
+	int num_floats = 1024 * 1024 * atoi(argv[1]) * atoi(argv[2]);
+	float* values = (float*)malloc(num_floats*sizeof(float));
+
+	for (int k = 0; k < num_floats; k++)
+		values[k] = ((float)mtrand());
+
+	int floats_width = 1024 * atoi(argv[1]);
+	int floats_height = 1024 * atoi(argv[2]);
+
+	long elapsed_ms;
+
+	printf("Finding the sum...\n\n");
+
+	float sum = 0;
+
+#if 1
 	ftime(&t1);
 
-	int sum = 0;
-	for (int i = 0; i < 10; i++)
+	for (int x = 0; x < floats_width; x++)
 	{
-		int q = 0;
-		while (q*b + b <= a)
-			q = q + 1;
-
-		sum += q;
-	}
-
-	ftime(&t2);
-
-	long elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
-
-	printf("Sum: %d\n", sum);
-	printf("Normal time: %dms\n", elapsed_ms);
-
-
-	ftime(&t1);
-
-	sum = 0;
-	for (int i = 0; i < 10; i++)
-	{
-		int q = 0;
-		while (q*b + b <= a)
-			q = q + 2;
-
-		while (q*b > a)
-			q = q - 1;
-
-		sum += q;
+		for (int y = 0; y < floats_height; y++)
+		{
+			int index = y * floats_width + x;
+			sum += values[index];
+		}
 	}
 
 	ftime(&t2);
 
 	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
 
-	printf("Sum: %d\n", sum);
-	printf("2x unroll time: %dms\n", elapsed_ms);
+	printf("Sum: %f\n", sum);
+	printf("Normal time: %dms\n", elapsed_ms);
+
+#else
+
+	ftime(&t1);
+
+	for (int y = 0; y < floats_height; y++)
+	{
+		for (int x = 0; x < floats_width; x++)
+		{
+			int index = y * floats_width + x;
+			sum += values[index];
+		}
+	}
+
+	ftime(&t2);
+
+	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
+
+	printf("Sum: %f\n", sum);
+	printf("Sum in register time: %dms\n", elapsed_ms);
+#endif
 
 
-
+	free(values);
 
 	return 0;
 
