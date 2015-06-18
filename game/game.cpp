@@ -347,7 +347,7 @@ void CGame::Update(float dt)
 	if (Game()->GetTime() >= m_projectile_initial_time + 8)
 	{
 		m_projectile_position[0] = m_projectile_initial_position;
-		m_projectile_velocity[0] = m_projectile_initial_velocity = Vector((float)(rand()%1000)/250-2, 2.5, (float)(rand()%1000)/250-2) * 5;
+		m_projectile_velocity[0] = m_projectile_initial_velocity = Vector((float)(mtrand()%1000)/250-2, 2.5, (float)(mtrand()%1000)/250-2) * 5;
 		m_projectile_initial_time = Game()->GetTime();
 		m_projectile_break_time = Game()->GetTime() + PredictProjectileMaximumHeightTime(m_projectile_initial_velocity, m_projectile_gravity);
 		m_projectile_number = 1;
@@ -358,7 +358,7 @@ void CGame::Update(float dt)
 		for (int i = 1; i < MAX_PROJECTILES; i++)
 		{
 			m_projectile_position[i] = m_projectile_position[0];
-			m_projectile_velocity[i] = m_projectile_velocity[0] + Vector((float)(rand()%1000)/250-2, (float)(rand()%1000)/250-2, (float)(rand()%1000)/250-2);
+			m_projectile_velocity[i] = m_projectile_velocity[0] + Vector((float)(mtrand()%1000)/250-2, (float)(mtrand()%1000)/250-2, (float)(mtrand()%1000)/250-2);
 		}
 		m_projectile_number = MAX_PROJECTILES;
 	}
@@ -1015,7 +1015,7 @@ void CGame::GraphDraw()
 				c.SetUniform("vecColor", Color(0, 255, 0, 255));
 			else if (node == m_pTargetNode)
 				c.SetUniform("vecColor", Color(255, 120, 0, 255));
-			else if (node->path_weight < FLT_MAX)
+			else if (node->path_weight < 99999999999)
 			{
 				int r = (int)Remap(node->path_weight, 0, 10, 50, 255);
 				c.SetUniform("vecColor", Color(r, 50, 50, 255));

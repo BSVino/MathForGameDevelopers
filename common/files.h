@@ -151,7 +151,7 @@ inline bool IsAbsolutePath(const std::string& sPath)
 	std::string sTrimmedPath = trim(sPath);
 
 	char cFirst = sTrimmedPath[0];
-	if (cFirst > 'A' && cFirst < 'Z' || cFirst > 'a' && cFirst < 'z')
+	if ((cFirst > 'A' && cFirst < 'Z') || (cFirst > 'a' && cFirst < 'z'))
 	{
 		if (sTrimmedPath[1] == ':')
 		{

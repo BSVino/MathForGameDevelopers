@@ -25,7 +25,7 @@ public:
 		{
 			seen = false;
 			path_from = ~0;
-			path_weight= FLT_MAX;
+			path_weight= 99999999999;
 		}
 
 		std::vector<edge_t> edges;

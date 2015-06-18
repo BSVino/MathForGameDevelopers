@@ -18,6 +18,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "color.h"
 
 #include <algorithm>
+#include <math.h>
 
 #include "vector.h"
 

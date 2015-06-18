@@ -247,7 +247,7 @@ void CShaderLibrary::WriteLog(const string& sFile, const char* pszLog, const cha
 	explode(pszShaderText, asTokens, "\n");
 
 	for (size_t i = 0; i < asTokens.size(); i++)
-		fprintf(fp, "%d: %s\n", i, asTokens[i].c_str());
+		fprintf(fp, "%zu: %s\n", i, asTokens[i].c_str());
 
 	fprintf(fp, "\n\n");
 	fclose(fp);

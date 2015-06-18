@@ -17,6 +17,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "character.h"
 
+#include <mtrand.h>
+
 #include <renderer/renderingcontext.h>
 
 CCharacter::CCharacter()
@@ -111,7 +113,7 @@ void CCharacter::TakeDamage(int iDamage)
 		CCharacter* pNew = Game()->CreateCharacter();
 
 		// Position the new monster in a random spot near the player.
-		pNew->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector((float)(rand()%20)-10, 0, (float)(rand()%20)-10));
+		pNew->SetTransform(Vector(1, 1, 1), 0, Vector(0, 1, 0), Vector((float)(mtrand()%20)-10, 0, (float)(mtrand()%20)-10));
 
 		pNew->m_aabbSize.vecMin = Vector(-1, 0, -1);
 		pNew->m_aabbSize.vecMax = Vector(1, 2, 1);

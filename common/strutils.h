@@ -86,23 +86,6 @@ inline std::string implode(const std::string& sGlue, std::vector<std::string>& a
 	return sResult;
 }
 
-inline int isspace(int i)
-{
-	if (i == ' ')
-		return true;
-
-	if (i == '\t')
-		return true;
-
-	if (i == '\r')
-		return true;
-
-	if (i == '\n')
-		return true;
-
-	return false;
-}
-
 inline std::string ltrim(std::string s)
 {
 	s.erase(s.begin(), std::find_if(s.begin(), s.end(), not1(ptr_fun<int, int>(isspace))));

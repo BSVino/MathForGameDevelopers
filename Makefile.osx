@@ -1,13 +1,13 @@
 CC=gcc
 CXX=g++
 RM=rm -f
-CPPFLAGS=
-LDFLAGS=-Llib
-LDLIBS=-lglfw -lXrandr -lGL
+CPPFLAGS=-g -O2
+LDFLAGS=-Llib/osx
+LDLIBS=-lglfw -framework OpenGL -framework ApplicationServices
 INCLUDES=-I. -Icommon -Imath -Iinclude
 
 SRCS_CPP= \
-    common/platform_linux.cpp \
+    common/platform_osx.cpp \
     common/mtrand.cpp \
     datamanager/data.cpp \
     datamanager/dataserializer.cpp \

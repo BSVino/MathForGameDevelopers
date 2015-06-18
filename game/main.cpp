@@ -23,72 +23,64 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include "sys/timeb.h"
 #endif
 
+#ifdef __clang__
+#include <sys/timeb.h>
+#include <stdlib.h>
+#endif
+
 #include "mtrand.h"
+
+#include "main.h"
+
+using std::vector;
+
 int main(int argc, char* argv[])
 {
 	mtsrand(0);
 
+	int max_frames = 10000;
+	int particles = 10000;
+
 	struct timeb t1, t2;
 
-	printf("Initializing test values...\n\n");
+	printf("Creating particles...\n\n");
 
-	int num_floats = 1024 * 1024 * atoi(argv[1]) * atoi(argv[2]);
-	float* values = (float*)malloc(num_floats*sizeof(float));
+	ParticleSystem s;
+	s.Initialize();
 
-	for (int k = 0; k < num_floats; k++)
-		values[k] = ((float)mtrand());
+	for (int k = 0; k < particles; k++)
+		s.SpawnParticle();
 
-	int floats_width = 1024 * atoi(argv[1]);
-	int floats_height = 1024 * atoi(argv[2]);
+#if 1
+	s.m_first_with_gravity = particles/2;
+	for (int k = 0; k < s.m_first_with_gravity; k++)
+		s.m_particles[k].m_gravity = false;
+	for (int k = s.m_first_with_gravity; k < particles; k++)
+		s.m_particles[k].m_gravity = true;
+#else
+	for (int k = 0; k < particles; k++)
+		s.m_particles[k].m_gravity = mtrand()%2;
+#endif
 
 	long elapsed_ms;
 
-	printf("Finding the sum...\n\n");
+	printf("Simulating particles...\n\n");
 
-	float sum = 0;
-
-#if 1
 	ftime(&t1);
 
-	for (int x = 0; x < floats_width; x++)
+	for (int k = 0; k < max_frames; k++)
 	{
-		for (int y = 0; y < floats_height; y++)
-		{
-			int index = y * floats_width + x;
-			sum += values[index];
-		}
+		g_current_time += g_frame_time;
+
+		s.Update();
 	}
 
 	ftime(&t2);
 
 	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
 
-	printf("Sum: %f\n", sum);
-	printf("Normal time: %dms\n", elapsed_ms);
-
-#else
-
-	ftime(&t1);
-
-	for (int y = 0; y < floats_height; y++)
-	{
-		for (int x = 0; x < floats_width; x++)
-		{
-			int index = y * floats_width + x;
-			sum += values[index];
-		}
-	}
-
-	ftime(&t2);
-
-	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
-
-	printf("Sum: %f\n", sum);
-	printf("Sum in register time: %dms\n", elapsed_ms);
-#endif
-
-
-	free(values);
+	printf("Time: %ldms\n", elapsed_ms);
+	printf("Simulation time: %f\n", g_current_time);
 
 	return 0;
 

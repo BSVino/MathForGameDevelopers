@@ -7,3 +7,4 @@
 mfgd
 *.o
 .depend
+*.sublime-workspace

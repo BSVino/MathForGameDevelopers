@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cp lib/osx/*.dylib .
+cd content
+../mfgd
