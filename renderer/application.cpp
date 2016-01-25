@@ -50,7 +50,11 @@ CApplication::CApplication(int argc, char** argv)
 
 void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, bool bResizeable)
 {
-	glfwInit();
+	if (!glfwInit())
+	{
+		printf("glfwInit failed\n");
+		exit(1);
+	}
 
 	m_bFullscreen = bFullscreen;
 

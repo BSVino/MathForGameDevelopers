@@ -28,6 +28,9 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <stdlib.h>
 #endif
 
+#include <float.h>
+#include <assert.h>
+
 #include "mtrand.h"
 
 #include "main.h"
@@ -36,64 +39,66 @@ using std::vector;
 
 int main(int argc, char* argv[])
 {
-	mtsrand(0);
-
-	int max_frames = 10000;
-	int particles = 10000;
-
-	struct timeb t1, t2;
-
-	printf("Creating particles...\n\n");
-
-	ParticleSystem s;
-	s.Initialize();
-
-	for (int k = 0; k < particles; k++)
-		s.SpawnParticle();
-
-#if 1
-	s.m_first_with_gravity = particles/2;
-	for (int k = 0; k < s.m_first_with_gravity; k++)
-		s.m_particles[k].m_gravity = false;
-	for (int k = s.m_first_with_gravity; k < particles; k++)
-		s.m_particles[k].m_gravity = true;
-#else
-	for (int k = 0; k < particles; k++)
-		s.m_particles[k].m_gravity = mtrand()%2;
-#endif
-
-	long elapsed_ms;
-
-	printf("Simulating particles...\n\n");
-
-	ftime(&t1);
-
-	for (int k = 0; k < max_frames; k++)
 	{
-		g_current_time += g_frame_time;
+		float b = 1000.0f;
+		float a = 0.00001f;
 
-		s.Update();
+		float c = a + b;
+
+		printf("%f\n", c);
 	}
 
-	ftime(&t2);
+	{
+		float b = 1000.0f;
+		float a = 0.0001f;
+		float c = -999.999f;
 
-	elapsed_ms = (long)(t2.time - t1.time) * 1000 + (t2.millitm - t1.millitm);
+		float d1 = (a + b) + c;
+		float d2 = a + (b + c);
 
-	printf("Time: %ldms\n", elapsed_ms);
-	printf("Simulation time: %f\n", g_current_time);
+		printf("%f %f\n", d1, d2);
+	}
+
+	{
+		float a = -1;
+		float b = 0;
+
+		float c = a / b;
+
+		float max = FLT_MAX;
+
+		if (c > max)
+			printf("Bigger!\n");
+		else
+			printf("Smaller!\n");
+
+		float d = 5;
+
+		float e = d / c;
+
+		printf("%f\n", c);
+	}
+
+	{
+		float a = 0;
+		float b = 0;
+
+		float c = a / b;
+
+		if (c == c)
+			printf("True\n");
+		else
+			printf("False\n");
+
+		assert(c == c); // Make sure c is not a NaN.
+
+		printf("%f\n", c);
+	}
+
 
 	return 0;
 
-
-
-
-
-
-
-
-
-
-
+	mtsrand(0);
 
 	// Create a game
 	CGame game(argc, argv);

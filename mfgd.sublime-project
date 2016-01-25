@@ -1,4 +1,23 @@
 {
+	"build_systems":
+	[
+		{
+			"encoding": "cp850",
+			"file_regex": "^(.*?)\\(([0-9]+),?([0-9]+)?\\) (.*)",
+			"name": "MakeOSX",
+			"osx":
+			{
+				"cmd":
+				[
+					"make",
+					"-f",
+					"Makefile.osx"
+				],
+				"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+				"working_dir": "${project_path}"
+			}
+		}
+	],
 	"folders":
 	[
 		{
