@@ -30,6 +30,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <float.h>
 #include <assert.h>
+#include <math.h>
 
 #include "mtrand.h"
 
@@ -37,64 +38,54 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 using std::vector;
 
+
+
+typedef float (*evaluate)(float x);
+
+float bisection(float a1, float b1, evaluate h, float epsilon)
+{
+	float an = a1;
+	float bn = b1;
+
+	float ha = h(a1); // h(a)
+	float hb = h(b1); // h(b)
+
+	for (int k = 0; k < 100; k++)
+	{
+		float x = (an + bn)/2;
+		float hx = h(x);
+
+		if (hx*ha < 0)
+		{
+			bn = x;
+			hb = hx;
+		}
+		else
+		{
+			an = x;
+			ha = hx;
+		}
+
+		if (fabs(bn - an) < epsilon)
+		{
+			printf("%d iterations\n", k);
+			return bn;
+		}
+	}
+
+	assert(false);
+
+	return bn;
+}
+
+float fsin(float x)
+{
+	return sin(x);
+}
+
 int main(int argc, char* argv[])
 {
-	{
-		float b = 1000.0f;
-		float a = 0.00001f;
-
-		float c = a + b;
-
-		printf("%f\n", c);
-	}
-
-	{
-		float b = 1000.0f;
-		float a = 0.0001f;
-		float c = -999.999f;
-
-		float d1 = (a + b) + c;
-		float d2 = a + (b + c);
-
-		printf("%f %f\n", d1, d2);
-	}
-
-	{
-		float a = -1;
-		float b = 0;
-
-		float c = a / b;
-
-		float max = FLT_MAX;
-
-		if (c > max)
-			printf("Bigger!\n");
-		else
-			printf("Smaller!\n");
-
-		float d = 5;
-
-		float e = d / c;
-
-		printf("%f\n", c);
-	}
-
-	{
-		float a = 0;
-		float b = 0;
-
-		float c = a / b;
-
-		if (c == c)
-			printf("True\n");
-		else
-			printf("False\n");
-
-		assert(c == c); // Make sure c is not a NaN.
-
-		printf("%f\n", c);
-	}
-
+	printf("%f\n", bisection(3, 4, fsin, 0.01f));
 
 	return 0;
 
