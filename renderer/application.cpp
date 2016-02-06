@@ -48,7 +48,7 @@ CApplication::CApplication(int argc, char** argv)
 	m_flLastMousePress = -1;
 }
 
-void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, bool bResizeable)
+bool CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, bool bResizeable)
 {
 	if (!glfwInit())
 	{
@@ -68,8 +68,8 @@ void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 	m_iWindowHeight = iHeight;
 
     glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
-    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
+    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	if (m_bMultisampling)
 		glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
@@ -83,7 +83,7 @@ void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 	if (!(m_pWindow = (size_t)glfwOpenWindow(iWidth, iHeight, 8, 8, 8, 8, 16, 0, GLFW_WINDOW)))
 	{
 		glfwTerminate();
-		return;
+		return false;
 	}
 
 	int iScreenWidth;
@@ -127,6 +127,8 @@ void CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 
 	m_pRenderer = CreateRenderer();
 	m_pRenderer->Initialize();
+
+	return true;
 }
 
 CApplication::~CApplication()

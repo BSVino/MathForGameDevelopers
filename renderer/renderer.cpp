@@ -50,8 +50,8 @@ CRenderer::CRenderer(size_t iWidth, size_t iHeight)
 
 	m_bUseMultisampleTextures = !!glTexImage2DMultisample;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glGetIntegerv(GL_SAMPLES, &m_iScreenSamples);
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	GLCall(glGetIntegerv(GL_SAMPLES, &m_iScreenSamples));
 
 	SetSize(iWidth, iHeight);
 
@@ -120,16 +120,16 @@ void CRenderer::StartRendering(class CRenderingContext* pContext)
 		m_aflProjection[i] = ((float*)pContext->GetProjection())[i];
 	}
 
-	glViewport(0, 0, (GLsizei)m_iWidth, (GLsizei)m_iHeight);
+	GLCall(glViewport(0, 0, (GLsizei)m_iWidth, (GLsizei)m_iHeight));
 
 	if (m_iScreenSamples)
-		glEnable(GL_MULTISAMPLE);
+		GLCall(glEnable(GL_MULTISAMPLE));
 }
 
 void CRenderer::FinishRendering(class CRenderingContext* pContext)
 {
 	if (m_iScreenSamples)
-		glDisable(GL_MULTISAMPLE);
+		GLCall(glDisable(GL_MULTISAMPLE));
 }
 
 void CRenderer::RenderOffscreenBuffers(class CRenderingContext* pContext)
@@ -208,53 +208,55 @@ void CRenderer::SetSize(int w, int h)
 
 bool CRenderer::HardwareSupported()
 {
-	if (!gl3wIsSupported(3, 0))
+	if (!gl3wIsSupported(3, 2))
 		return false;
 
 	// Compile a test shader. If it fails we don't support shaders.
 	const char* pszVertexShader =
-		"#version 130\n"
+		"#version 150\n"
 		"void main()"
 		"{"
 		"	gl_Position = vec4(0.0, 0.0, 0.0, 0.0);"
 		"}";
 
 	const char* pszFragmentShader =
-		"#version 130\n"
+		"#version 150\n"
 		"out vec4 vecFragColor;"
 		"void main()"
 		"{"
 		"	vecFragColor = vec4(1.0, 1.0, 1.0, 1.0);"
 		"}";
 
-	GLuint iVShader = glCreateShader(GL_VERTEX_SHADER);
-	GLuint iFShader = glCreateShader(GL_FRAGMENT_SHADER);
-	GLuint iProgram = glCreateProgram();
+	GLuint iVShader = GLCallReturn(glCreateShader(GL_VERTEX_SHADER));
+	GLuint iFShader = GLCallReturn(glCreateShader(GL_FRAGMENT_SHADER));
+	GLuint iProgram = GLCallReturn(glCreateProgram());
 
-	glShaderSource(iVShader, 1, &pszVertexShader, NULL);
-	glCompileShader(iVShader);
+	GLCall(glShaderSource(iVShader, 1, &pszVertexShader, NULL));
+	GLCall(glCompileShader(iVShader));
+	GLchar info_log[512];
+	GLCall(glGetShaderInfoLog(iVShader, sizeof(info_log), NULL, info_log));
 
 	int iVertexCompiled;
-	glGetShaderiv(iVShader, GL_COMPILE_STATUS, &iVertexCompiled);
+	GLCall(glGetShaderiv(iVShader, GL_COMPILE_STATUS, &iVertexCompiled));
 
-	glShaderSource(iFShader, 1, &pszFragmentShader, NULL);
-	glCompileShader(iFShader);
+	GLCall(glShaderSource(iFShader, 1, &pszFragmentShader, NULL));
+	GLCall(glCompileShader(iFShader));
 
 	int iFragmentCompiled;
-	glGetShaderiv(iFShader, GL_COMPILE_STATUS, &iFragmentCompiled);
+	GLCall(glGetShaderiv(iFShader, GL_COMPILE_STATUS, &iFragmentCompiled));
 
-	glAttachShader(iProgram, iVShader);
-	glAttachShader(iProgram, iFShader);
-	glLinkProgram(iProgram);
+	GLCall(glAttachShader(iProgram, iVShader));
+	GLCall(glAttachShader(iProgram, iFShader));
+	GLCall(glLinkProgram(iProgram));
 
 	int iProgramLinked;
-	glGetProgramiv(iProgram, GL_LINK_STATUS, &iProgramLinked);
+	GLCall(glGetProgramiv(iProgram, GL_LINK_STATUS, &iProgramLinked));
 
-	glDetachShader(iProgram, iVShader);
-	glDetachShader(iProgram, iFShader);
-	glDeleteShader(iVShader);
-	glDeleteShader(iFShader);
-	glDeleteProgram(iProgram);
+	GLCall(glDetachShader(iProgram, iVShader));
+	GLCall(glDetachShader(iProgram, iFShader));
+	GLCall(glDeleteShader(iVShader));
+	GLCall(glDeleteShader(iFShader));
+	GLCall(glDeleteProgram(iProgram));
 
 	return iVertexCompiled == GL_TRUE && iFragmentCompiled == GL_TRUE && iProgramLinked == GL_TRUE;
 }
@@ -265,24 +267,24 @@ size_t CRenderer::LoadVertexDataIntoGL(size_t iSizeInBytes, float* aflVertices)
 	assert(iSizeInBytes%4 == 0);
 
 	GLuint iVBO;
-	glGenBuffers(1, &iVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, iVBO);
+	GLCall(glGenBuffers(1, &iVBO));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, iVBO));
 
-	glBufferData(GL_ARRAY_BUFFER, iSizeInBytes, 0, GL_STATIC_DRAW);
+	GLCall(glBufferData(GL_ARRAY_BUFFER, iSizeInBytes, 0, GL_STATIC_DRAW));
 
-	glBufferSubData(GL_ARRAY_BUFFER, 0, iSizeInBytes, aflVertices);
+	GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, iSizeInBytes, aflVertices));
 
 	int iSize = 0;
-	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &iSize);
+	GLCall(glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &iSize));
 	if(iSizeInBytes != iSize)
 	{
-		glDeleteBuffers(1, &iVBO);
+		GLCall(glDeleteBuffers(1, &iVBO));
 		assert(false);
 		// Data size is mismatch with input array
 		return 0;
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
 	return iVBO;
 }
@@ -290,18 +292,18 @@ size_t CRenderer::LoadVertexDataIntoGL(size_t iSizeInBytes, float* aflVertices)
 size_t CRenderer::LoadIndexDataIntoGL(size_t iSizeInBytes, unsigned int* aiIndices)
 {
 	GLuint iVBO;
-	glGenBuffers(1, &iVBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iVBO);
+	GLCall(glGenBuffers(1, &iVBO));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iVBO));
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, iSizeInBytes, 0, GL_STATIC_DRAW);
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, iSizeInBytes, 0, GL_STATIC_DRAW));
 
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, iSizeInBytes, aiIndices);
+	GLCall(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, iSizeInBytes, aiIndices));
 
 	int iSize = 0;
-	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &iSize);
-	if(iSizeInBytes != iSize)
+	GLCall(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &iSize));
+	if (iSizeInBytes != iSize)
 	{
-		glDeleteBuffers(1, &iVBO);
+		GLCall(glDeleteBuffers(1, &iVBO));
 		assert(false);
 		// Data size is mismatch with input array
 		return 0;
@@ -312,7 +314,7 @@ size_t CRenderer::LoadIndexDataIntoGL(size_t iSizeInBytes, unsigned int* aiIndic
 
 void CRenderer::UnloadVertexDataFromGL(size_t iBuffer)
 {
-	glDeleteBuffers(1, (GLuint*)&iBuffer);
+	GLCall(glDeleteBuffers(1, (GLuint*)&iBuffer));
 }
 
 size_t CRenderer::LoadTextureIntoGL(string sFilename, int iClamp)
@@ -351,25 +353,25 @@ size_t CRenderer::LoadTextureIntoGL(string sFilename, int iClamp)
 
 size_t CRenderer::LoadTextureIntoGL(unsigned char* pclrData, int x, int y, int iClamp, bool bNearestFiltering)
 {
-	glEnable(GL_TEXTURE_2D);
+	GLCall(glEnable(GL_TEXTURE_2D));
 
 	GLuint iGLId;
-	glGenTextures(1, &iGLId);
-	glBindTexture(GL_TEXTURE_2D, iGLId);
+	GLCall(glGenTextures(1, &iGLId));
+	GLCall(glBindTexture(GL_TEXTURE_2D, iGLId));
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bNearestFiltering?GL_NEAREST:GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bNearestFiltering?GL_NEAREST:GL_LINEAR);
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bNearestFiltering?GL_NEAREST:GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bNearestFiltering?GL_NEAREST:GL_LINEAR));
 
 	if (iClamp == 1)
 	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pclrData);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pclrData));
+	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
 	s_iTexturesLoaded++;
 
@@ -379,24 +381,24 @@ size_t CRenderer::LoadTextureIntoGL(unsigned char* pclrData, int x, int y, int i
 size_t CRenderer::LoadTextureIntoGL(Vector* pvecData, int x, int y, int iClamp, bool bMipMaps)
 {
 	GLuint iGLId;
-	glGenTextures(1, &iGLId);
-	glBindTexture(GL_TEXTURE_2D, iGLId);
+	GLCall(glGenTextures(1, &iGLId));
+	GLCall(glBindTexture(GL_TEXTURE_2D, iGLId));
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 
 	if (iClamp == 1)
 	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, pvecData);
+	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, pvecData));
 
 	if (bMipMaps)
-		glGenerateMipmap(GL_TEXTURE_2D);
+		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
 	s_iTexturesLoaded++;
 
@@ -405,7 +407,7 @@ size_t CRenderer::LoadTextureIntoGL(Vector* pvecData, int x, int y, int iClamp, 
 
 void CRenderer::UnloadTextureFromGL(size_t iGLId)
 {
-	glDeleteTextures(1, (GLuint*)&iGLId);
+	GLCall(glDeleteTextures(1, (GLuint*)&iGLId));
 	s_iTexturesLoaded--;
 }
 

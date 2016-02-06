@@ -39,63 +39,20 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 using std::vector;
 
 
-
-typedef float (*evaluate)(float x);
-
-float bisection(float a1, float b1, evaluate h, float epsilon)
-{
-	float an = a1;
-	float bn = b1;
-
-	float ha = h(a1); // h(a)
-	float hb = h(b1); // h(b)
-
-	for (int k = 0; k < 100; k++)
-	{
-		float x = (an + bn)/2;
-		float hx = h(x);
-
-		if (hx*ha < 0)
-		{
-			bn = x;
-			hb = hx;
-		}
-		else
-		{
-			an = x;
-			ha = hx;
-		}
-
-		if (fabs(bn - an) < epsilon)
-		{
-			printf("%d iterations\n", k);
-			return bn;
-		}
-	}
-
-	assert(false);
-
-	return bn;
-}
-
-float fsin(float x)
-{
-	return sin(x);
-}
-
 int main(int argc, char* argv[])
 {
-	printf("%f\n", bisection(3, 4, fsin, 0.01f));
-
-	return 0;
-
 	mtsrand(0);
 
 	// Create a game
 	CGame game(argc, argv);
 
 	// Open the game's window
-	game.OpenWindow(1000, 564, false, false);
+	if (!game.OpenWindow(1000, 564, false, false))
+	{
+		printf("Couldn't open OpenGL Window!\n");
+		return 1;
+	}
+
 	game.SetMouseCursorEnabled(false);
 
 	game.Load();

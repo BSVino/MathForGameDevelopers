@@ -2,4 +2,4 @@
 
 cp lib/osx/*.dylib .
 cd content
-lldb ../mfgd
+lldb ./mfgd
