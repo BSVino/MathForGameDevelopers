@@ -32,14 +32,11 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <renderer/application.h>
 #include <renderer/renderer.h>
 
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
 using namespace std;
 
-vector<Vector2D> CRenderingContext::s_avecTexCoord;
-vector<vector<Vector2D> > CRenderingContext::s_aavecTexCoords;
-vector<Vector> CRenderingContext::s_avecNormals;
-vector<Vector> CRenderingContext::s_avecTangents;
-vector<Vector> CRenderingContext::s_avecBitangents;
-vector<Vector> CRenderingContext::s_avecVertices;
+vector<float> CRenderingContext::s_dynamic_verts;
 
 vector<CRenderingContext::CRenderContext> CRenderingContext::s_aContexts;
 
@@ -564,11 +561,8 @@ void CRenderingContext::SetColor(const ::Color& c)
 
 void CRenderingContext::BeginRenderTris()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -579,11 +573,8 @@ void CRenderingContext::BeginRenderTris()
 
 void CRenderingContext::BeginRenderTriFan()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -594,11 +585,8 @@ void CRenderingContext::BeginRenderTriFan()
 
 void CRenderingContext::BeginRenderTriStrip()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -609,11 +597,8 @@ void CRenderingContext::BeginRenderTriStrip()
 
 void CRenderingContext::BeginRenderLines()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -624,11 +609,8 @@ void CRenderingContext::BeginRenderLines()
 
 void CRenderingContext::BeginRenderLineLoop()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -639,11 +621,8 @@ void CRenderingContext::BeginRenderLineLoop()
 
 void CRenderingContext::BeginRenderLineStrip()
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -659,11 +638,8 @@ void CRenderingContext::BeginRenderDebugLines()
 
 void CRenderingContext::BeginRenderPoints(float flSize)
 {
-	s_avecTexCoord.clear();
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		s_aavecTexCoords[i].clear();
-	s_avecNormals.clear();
-	s_avecVertices.clear();
+	s_dynamic_verts.clear();
+	m_num_verts = 0;
 
 	m_bTexCoord = false;
 	m_bNormal = false;
@@ -675,72 +651,75 @@ void CRenderingContext::BeginRenderPoints(float flSize)
 
 void CRenderingContext::TexCoord(float s, float t, int iChannel)
 {
-	if (iChannel >= (int)s_avecTexCoord.size())
-		s_avecTexCoord.resize(iChannel+1);
-	s_avecTexCoord[iChannel] = Vector2D(s, t);
+	m_texcoords = Vector2D(s, t);
 
 	m_bTexCoord = true;
 }
 
 void CRenderingContext::TexCoord(const Vector2D& v, int iChannel)
 {
-	if (iChannel >= (int)s_avecTexCoord.size())
-		s_avecTexCoord.resize(iChannel+1);
-	s_avecTexCoord[iChannel] = v;
+	m_texcoords = v;
 
 	m_bTexCoord = true;
 }
 
 void CRenderingContext::TexCoord(const Vector& v, int iChannel)
 {
-	if (iChannel >= (int)s_avecTexCoord.size())
-		s_avecTexCoord.resize(iChannel+1);
-	s_avecTexCoord[iChannel] = v;
+	m_texcoords = v;
 
 	m_bTexCoord = true;
 }
 
 void CRenderingContext::Normal(const Vector& v)
 {
-	m_vecNormal = v;
+	m_normal = v;
 	m_bNormal = true;
 }
 
 void CRenderingContext::Tangent(const Vector& v)
 {
 	TAssert(m_bNormal);
-	m_vecTangent = v;
+	m_tangent = v;
 	m_bTangents = true;
 }
 
 void CRenderingContext::Bitangent(const Vector& v)
 {
 	TAssert(m_bNormal);
-	m_vecBitangent = v;
+	m_bitangent = v;
 	m_bTangents = true;
 }
 
 void CRenderingContext::Vertex(const Vector& v)
 {
+	m_num_verts++;
+
+	s_dynamic_verts.push_back(v.x);
+	s_dynamic_verts.push_back(v.y);
+	s_dynamic_verts.push_back(v.z);
+
 	if (m_bTexCoord)
 	{
-		if (s_aavecTexCoords.size() < s_avecTexCoord.size())
-			s_aavecTexCoords.resize(s_avecTexCoord.size());
-
-		for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-			s_aavecTexCoords[i].push_back(s_avecTexCoord[i]);
+		s_dynamic_verts.push_back(m_texcoords.x);
+		s_dynamic_verts.push_back(m_texcoords.y);
 	}
 
 	if (m_bNormal)
-		s_avecNormals.push_back(m_vecNormal);
+	{
+		s_dynamic_verts.push_back(m_normal.x);
+		s_dynamic_verts.push_back(m_normal.y);
+		s_dynamic_verts.push_back(m_normal.z);
+	}
 
 	if (m_bTangents)
 	{
-		s_avecTangents.push_back(m_vecTangent);
-		s_avecBitangents.push_back(m_vecBitangent);
+		s_dynamic_verts.push_back(m_tangent.x);
+		s_dynamic_verts.push_back(m_tangent.y);
+		s_dynamic_verts.push_back(m_tangent.z);
+		s_dynamic_verts.push_back(m_bitangent.x);
+		s_dynamic_verts.push_back(m_bitangent.y);
+		s_dynamic_verts.push_back(m_bitangent.z);
 	}
-
-	s_avecVertices.push_back(v);
 }
 
 void CRenderingContext::EndRender()
@@ -768,7 +747,38 @@ void CRenderingContext::EndRender()
 	GLCall(glBindVertexArray(m_pRenderer->m_default_vao));
 
 	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_pRenderer->m_dynamic_mesh_vbo));
-	GLCall(glBufferData(GL_ARRAY_BUFFER, GLsizeiptr((size_t)s_avecVertices.size() * sizeof(float)), s_avecVertices.data(), GL_STATIC_DRAW));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, GLsizeiptr((size_t)s_dynamic_verts.size() * sizeof(float)), s_dynamic_verts.data(), GL_STATIC_DRAW));
+
+	int stride = 3 * sizeof(float);
+	int position_offset = 0;
+	int texcoord_offset = stride;
+	int normal_offset = stride;
+	int tangent_offset = stride;
+	int bitangent_offset = stride;
+
+	if (m_bTexCoord)
+	{
+		int uv_size = 2 * sizeof(float);
+		stride += uv_size;
+		normal_offset += uv_size;
+		tangent_offset += uv_size;
+		bitangent_offset += uv_size;
+	}
+
+	if (m_bNormal)
+	{
+		int normal_size = 3 * sizeof(float);
+		stride += normal_size;
+		tangent_offset += normal_size;
+		bitangent_offset += normal_size;
+	}
+
+	if (m_bTangents)
+	{
+		int tangents_size = 6 * sizeof(float);
+		stride += tangents_size;
+		bitangent_offset += 3 * sizeof(float);
+	}
 
 	if (m_bTexCoord)
 	{
@@ -777,7 +787,7 @@ void CRenderingContext::EndRender()
 			if (m_pShader->m_aiTexCoordAttributes[i] != ~0)
 			{
 				GLCall(glEnableVertexAttribArray(m_pShader->m_aiTexCoordAttributes[i]));
-				GLCall(glVertexAttribPointer(m_pShader->m_aiTexCoordAttributes[i], 2, GL_FLOAT, false, 0, s_aavecTexCoords[0].data()));
+				GLCall(glVertexAttribPointer(m_pShader->m_aiTexCoordAttributes[i], 2, GL_FLOAT, false, stride, BUFFER_OFFSET(texcoord_offset)));
 			}
 		}
 	}
@@ -785,22 +795,22 @@ void CRenderingContext::EndRender()
 	if (m_bNormal && m_pShader->m_iNormalAttribute != ~0)
 	{
 		GLCall(glEnableVertexAttribArray(m_pShader->m_iNormalAttribute));
-		GLCall(glVertexAttribPointer(m_pShader->m_iNormalAttribute, 3, GL_FLOAT, false, 0, s_avecNormals.data()));
+		GLCall(glVertexAttribPointer(m_pShader->m_iNormalAttribute, 3, GL_FLOAT, false, stride, BUFFER_OFFSET(normal_offset)));
 	}
 
 	if (m_bTangents && m_pShader->m_iTangentAttribute != ~0 && m_pShader->m_iBitangentAttribute != ~0)
 	{
 		GLCall(glEnableVertexAttribArray(m_pShader->m_iTangentAttribute));
-		GLCall(glVertexAttribPointer(m_pShader->m_iTangentAttribute, 3, GL_FLOAT, false, 0, s_avecTangents.data()));
+		GLCall(glVertexAttribPointer(m_pShader->m_iTangentAttribute, 3, GL_FLOAT, false, stride, BUFFER_OFFSET(tangent_offset)));
 
 		GLCall(glEnableVertexAttribArray(m_pShader->m_iBitangentAttribute));
-		GLCall(glVertexAttribPointer(m_pShader->m_iBitangentAttribute, 3, GL_FLOAT, false, 0, s_avecBitangents.data()));
+		GLCall(glVertexAttribPointer(m_pShader->m_iBitangentAttribute, 3, GL_FLOAT, false, stride, BUFFER_OFFSET(bitangent_offset)));
 	}
 
 	GLCall(glEnableVertexAttribArray(m_pShader->m_iPositionAttribute));
-	GLCall(glVertexAttribPointer(m_pShader->m_iPositionAttribute, 3, GL_FLOAT, false, 0, s_avecVertices.data()));
+	GLCall(glVertexAttribPointer(m_pShader->m_iPositionAttribute, 3, GL_FLOAT, false, stride, BUFFER_OFFSET(0)));
 
-	GLCall(glDrawArrays(m_iDrawMode, 0, s_avecVertices.size()));
+	GLCall(glDrawArrays(m_iDrawMode, 0, m_num_verts));
 
 	GLCall(glDisableVertexAttribArray(m_pShader->m_iPositionAttribute));
 	for (size_t i = 0; i < MAX_TEXTURE_CHANNELS; i++)
@@ -824,55 +834,12 @@ void CRenderingContext::CreateVBO(size_t& iVBO, size_t& iVBOSize)
 	if (!m_pRenderer)
 		return;
 
-	TAssert(s_avecVertices.size());
-	if (!s_avecVertices.size())
+	TAssert(s_dynamic_verts.size());
+	if (!s_dynamic_verts.size())
 		return;
 
-	TAssert(m_iDrawMode == GL_TRIANGLES);
-
-	size_t iDataSize = 0;
-	iDataSize += s_avecVertices.size()*3;
-
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		iDataSize += s_aavecTexCoords[i].size()*2;
-
-	iDataSize += s_avecNormals.size()*3;
-
-	vector<float> aflData;
-	aflData.reserve(iDataSize);
-
-	TAssert(!s_avecNormals.size() || s_avecVertices.size() == s_avecNormals.size());
-	for (size_t i = 0; i < s_aavecTexCoords.size(); i++)
-		TAssert(!s_aavecTexCoords[i].size() || s_avecVertices.size() == s_aavecTexCoords[i].size());
-
-	for (size_t i = 0; i < s_avecVertices.size(); i++)
-	{
-		Vector& vecVert = s_avecVertices[i];
-		aflData.push_back(vecVert.x);
-		aflData.push_back(vecVert.y);
-		aflData.push_back(vecVert.z);
-
-		if (s_avecNormals.size())
-		{
-			Vector& vecNormal = s_avecNormals[i];
-			aflData.push_back(vecNormal.x);
-			aflData.push_back(vecNormal.y);
-			aflData.push_back(vecNormal.z);
-		}
-
-		for (size_t j = 0; j < s_aavecTexCoords.size(); j++)
-		{
-			if (s_aavecTexCoords[j].size())
-			{
-				Vector2D& vecUV = s_aavecTexCoords[j][i];
-				aflData.push_back(vecUV.x);
-				aflData.push_back(vecUV.y);
-			}
-		}
-	}
-
-	iVBO = m_pRenderer->LoadVertexDataIntoGL(aflData.size()*sizeof(float), aflData.data());
-	iVBOSize = s_avecVertices.size();
+	iVBOSize = (size_t)s_dynamic_verts.size() * sizeof(s_dynamic_verts[0]);
+	iVBO = m_pRenderer->LoadVertexDataIntoGL(iVBOSize, s_dynamic_verts.data());
 }
 
 void CRenderingContext::BeginRenderVertexArray(size_t iBuffer)

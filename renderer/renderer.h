@@ -119,7 +119,7 @@ public:
 	static size_t   LoadTextureIntoGL(unsigned char* pclrData, int x, int y, int iClamp, bool bNearestFiltering = false);
 	static size_t   LoadTextureIntoGL(Vector* pvecData, int x, int y, int iClamp, bool bMipMaps);
 
-protected:
+public:
 	size_t			m_iWidth;
 	size_t			m_iHeight;
 

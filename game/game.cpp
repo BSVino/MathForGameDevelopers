@@ -21,6 +21,14 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <algorithm>
 
+#include <GL3/gl3w.h>
+
+#if defined(__APPLE__)
+#include <OpenGL/glu.h>
+#else
+#include <GL/glu.h>
+#endif
+
 #include <mtrand.h>
 #include <math/collision.h>
 #include <math/frustum.h>
@@ -30,6 +38,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include <renderer/renderer.h>
 #include <renderer/renderingcontext.h>
+#include <renderer/shaders.h>
 
 #include "character.h"
 
@@ -344,6 +353,7 @@ void CGame::Update(float dt)
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
 	}
 
+/*
 	if (Game()->GetTime() >= m_projectile_initial_time + 8)
 	{
 		m_projectile_position[0] = m_projectile_initial_position;
@@ -375,6 +385,7 @@ void CGame::Update(float dt)
 			m_projectile_position[i].y = 9999999; // Move it way up high and out of sight until it gets reset. Sort of a hack, no big deal.
 		}
 	}
+	*/
 }
 
 void CGame::Draw()
@@ -426,6 +437,7 @@ void CGame::Draw()
 	// Render the ground.
 	r.SetUniform("vecColor", Vector4D(0.6f, 0.7f, 0.9f, 1));
 	r.SetUniform("vecCameraPosition", GetRenderer()->GetCameraPosition());
+
 	r.BeginRenderTriFan();
 		r.Normal(Vector(0, 1, 0));
 		r.Tangent(Vector(1, 0, 0));
@@ -732,7 +744,7 @@ void CGame::GameLoop()
 
 	mtsrand(0);
 
-	for (int i = 0; i < 800; i++)
+	/*for (int i = 0; i < 800; i++)
 	{
 		float rand1 = (float)(mtrand()%1000)/1000; // [0, 1]
 		float rand2 = (float)(mtrand()%1000)/1000; // [0, 1]
@@ -749,7 +761,7 @@ void CGame::GameLoop()
 		pProp->m_aabbSize.vecMax = vecPropMax;
 		pProp->m_clrRender = Color(0.4f, 0.8f, 0.2f, 1.0f);
 		pProp->m_iTexture = m_iCrateTexture;
-	}
+	}*/
 
 	CRenderingContext c(GetRenderer());
 	c.RenderBox(Vector(-1, 0, -1), Vector(1, 2, 1));

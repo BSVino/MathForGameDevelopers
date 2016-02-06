@@ -36,6 +36,9 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "main.h"
 
+#define VTB_IMPLEMENTATION
+#include "vtb.h"
+
 using std::vector;
 
 

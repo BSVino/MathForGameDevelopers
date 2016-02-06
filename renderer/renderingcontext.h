@@ -182,12 +182,14 @@ public:
 	Vector                  m_vecTangent;
 	Vector                  m_vecBitangent;
 
-	static std::vector<Vector2D>    s_avecTexCoord;
-	static std::vector<std::vector<Vector2D> > s_aavecTexCoords;	// A vector of a vector of vectors. Inception!
-	static std::vector<Vector>      s_avecNormals;
-	static std::vector<Vector>      s_avecTangents;
-	static std::vector<Vector>      s_avecBitangents;
-	static std::vector<Vector>      s_avecVertices;
+	// For building meshes
+	Vector m_normal;
+	Vector m_tangent;
+	Vector m_bitangent;
+	Vector2D m_texcoords;// [MAX_TEXTURE_CHANNELS];
+	Vector4D m_color;
+	static std::vector<float>       s_dynamic_verts;
+	int    m_num_verts;
 
 	static std::vector<CRenderContext> s_aContexts;
 };
