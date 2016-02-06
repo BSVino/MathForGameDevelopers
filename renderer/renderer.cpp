@@ -53,6 +53,11 @@ CRenderer::CRenderer(size_t iWidth, size_t iHeight)
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	GLCall(glGetIntegerv(GL_SAMPLES, &m_iScreenSamples));
 
+	GLCall(glGenVertexArrays(1, &m_default_vao));
+	GLCall(glBindVertexArray(m_default_vao));
+
+	GLCall(glGenBuffers(1, &m_dynamic_mesh_vbo));
+
 	SetSize(iWidth, iHeight);
 
 	m_bDrawBackground = true;

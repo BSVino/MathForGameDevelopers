@@ -139,6 +139,9 @@ protected:
 	Vector2D        m_vecFullscreenTexCoords[6];
 	Vector          m_vecFullscreenVertices[6];
 
+	uint32_t        m_default_vao;
+	uint32_t        m_dynamic_mesh_vbo;
+
 	bool			m_bDrawBackground;
 
 	bool			m_bUseMultisampleTextures;

@@ -765,6 +765,11 @@ void CRenderingContext::EndRender()
 
 	oContext.m_bProjectionUpdated = oContext.m_bViewUpdated = oContext.m_bTransformUpdated = true;
 
+	GLCall(glBindVertexArray(m_pRenderer->m_default_vao));
+
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_pRenderer->m_dynamic_mesh_vbo));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, GLsizeiptr((size_t)s_avecVertices.size() * sizeof(float)), s_avecVertices.data(), GL_STATIC_DRAW));
+
 	if (m_bTexCoord)
 	{
 		for (size_t i = 0; i < MAX_TEXTURE_CHANNELS; i++)
