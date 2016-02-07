@@ -42,6 +42,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "character.h"
 
+#include "seaweed.h"
+
 CGame::CGame(int argc, char** argv)
 	: CApplication(argc, argv)
 {
@@ -70,6 +72,13 @@ void CGame::Load()
 	// Fire the first one
 	m_projectile_position[0] = m_projectile_initial_position;
 	m_projectile_velocity[0] = m_projectile_initial_velocity;
+
+	for (int k = 0; k < sizeof(g_seaweed) / sizeof(g_seaweed[0]); k++)
+	{
+		g_seaweed[k].m_positions[0][0] = g_seaweed[k].m_positions[1][0] = vec3(g_seaweed_positions[k].x, 0, g_seaweed_positions[k].y);
+		for (int n = 1; n < SEAWEED_LINKS; n++)
+			g_seaweed[k].m_positions[0][n] = g_seaweed[k].m_positions[1][n] = g_seaweed[k].m_positions[0][n - 1] + vec3(0, g_seaweed_link_length, 0);
+	}
 }
 
 void CGame::MakePuff(const Point& p)
@@ -386,6 +395,9 @@ void CGame::Update(float dt)
 		}
 	}
 	*/
+
+	while (g_seaweed_simulation_time < Game()->GetTime())
+		SimulateSeaweed();
 }
 
 void CGame::Draw()
@@ -550,6 +562,8 @@ void CGame::Draw()
 	}
 
 	GraphDraw();
+
+	RenderSeaweed();
 
 	pRenderer->FinishRendering(&r);
 

@@ -8,3 +8,4 @@ mfgd
 *.o
 .depend
 *.sublime-workspace
+.DS_Store

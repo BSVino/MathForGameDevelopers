@@ -94,7 +94,7 @@ public:
 	void GraphReset();
 	void GraphDraw();
 
-private:
+public:
 	int m_iLastMouseX;
 	int m_iLastMouseY;
 

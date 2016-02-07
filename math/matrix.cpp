@@ -56,6 +56,14 @@ Matrix4x4::Matrix4x4(const Vector& vecForward, const Vector& vecUp, const Vector
 	m[3][3] = 1;
 }
 
+Matrix4x4::Matrix4x4(const Vector4D& vecForward, const Vector4D& vecUp, const Vector4D& vecRight, const Vector4D& vecPosition)
+{
+	SetForwardVector(vecForward);
+	SetUpVector(vecUp);
+	SetRightVector(vecRight);
+	SetTranslation(vecPosition);
+}
+
 void Matrix4x4::Identity()
 {
 	memset(this, 0, sizeof(Matrix4x4));
@@ -192,6 +200,14 @@ void Matrix4x4::SetTranslation(const Vector& vecPos)
 	m[3][0] = vecPos.x;
 	m[3][1] = vecPos.y;
 	m[3][2] = vecPos.z;
+}
+
+void Matrix4x4::SetTranslation(const Vector4D& vecPos)
+{
+	m[3][0] = vecPos.x;
+	m[3][1] = vecPos.y;
+	m[3][2] = vecPos.z;
+	m[3][3] = vecPos.w;
 }
 
 void Matrix4x4::SetRotation(float flAngle, const Vector& v)
@@ -549,6 +565,30 @@ void Matrix4x4::SetRightVector(const Vector& v)
 	m[2][0] = v.x;
 	m[2][1] = v.y;
 	m[2][2] = v.z;
+}
+
+void Matrix4x4::SetForwardVector(const Vector4D& v)
+{
+	m[0][0] = v.x;
+	m[0][1] = v.y;
+	m[0][2] = v.z;
+	m[0][3] = v.w;
+}
+
+void Matrix4x4::SetUpVector(const Vector4D& v)
+{
+	m[1][0] = v.x;
+	m[1][1] = v.y;
+	m[1][2] = v.z;
+	m[1][3] = v.w;
+}
+
+void Matrix4x4::SetRightVector(const Vector4D& v)
+{
+	m[2][0] = v.x;
+	m[2][1] = v.y;
+	m[2][2] = v.z;
+	m[2][3] = v.w;
 }
 
 // Use the information embedded in a matrix to create its inverse.

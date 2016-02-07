@@ -51,6 +51,7 @@ public:
 	            Matrix4x4(const Matrix4x4& m);
 	explicit    Matrix4x4(float* aflValues);
 	explicit    Matrix4x4(const Vector& vecForward, const Vector& vecUp, const Vector& vecRight, const Vector& vecPosition = Vector(0,0,0));
+	explicit    Matrix4x4(const Vector4D& vecForward, const Vector4D& vecUp, const Vector4D& vecRight, const Vector4D& vecPosition = Vector4D(0,0,0,1));
 
 public:
 	void		Identity();
@@ -68,6 +69,7 @@ public:
 
 	// Set a transformation
 	void		SetTranslation(const Vector& vecPos);
+	void    	SetTranslation(const Vector4D& v);
 	void		SetRotation(float flAngle, const Vector& vecAxis);		// Assumes the axis is a normalized vector.
 	void		SetScale(const Vector& vecScale);
 	void		SetReflection(const Vector& vecPlaneNormal);			// Reflection around a plane with this normal which passes through the center of the local space.
@@ -117,6 +119,9 @@ public:
 	void		SetForwardVector(const Vector& vecForward);
 	void		SetUpVector(const Vector& vecUp);
 	void		SetRightVector(const Vector& vecRight);
+	void		SetForwardVector(const Vector4D& vecForward);
+	void		SetUpVector(const Vector4D& vecUp);
+	void		SetRightVector(const Vector4D& vecRight);
 	Vector		GetForwardVector() const { return Vector(m[0][0], m[0][1], m[0][2]); }
 	Vector		GetUpVector() const { return Vector(m[1][0], m[1][1], m[1][2]); }
 	Vector		GetRightVector() const { return Vector(m[2][0], m[2][1], m[2][2]); }

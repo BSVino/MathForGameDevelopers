@@ -237,6 +237,15 @@ inline long vmax(long a, long b)
 	return (a > b) ? a : b;
 }
 
+inline float vmin(float a, float b)
+{
+	return (a < b) ? a : b;
+}
+
+inline float vmax(float a, float b)
+{
+	return (a > b) ? a : b;
+}
 
 
 
