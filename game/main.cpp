@@ -44,6 +44,32 @@ using std::vector;
 
 int main(int argc, char* argv[])
 {
+	for (int k = -6; k <= 14; k++)
+	{
+		float number = pow(2, k);
+		printf("invsqrt(%f) = %f\n", number, 1/sqrt(number));
+
+		int32_t* l = (int32_t*)&number;
+		int32_t exponent = (*l)>>23;
+		printf("my estimate: 2^%d*s -> 2^%d*s\n", exponent-127, 62 - exponent/2);
+
+		int32_t int_estimate = 0x5F000000 - ((*l)>>1);
+		float my_estimate = *(float*)&int_estimate;
+
+		int_estimate = 0x5f3759df - ((*l)>>1);
+		float orig_estimate = *(float*)&int_estimate;
+
+		printf("my: %f orig: %f\n", my_estimate, orig_estimate);
+
+		my_estimate = 1.5f*my_estimate - 0.5f*my_estimate*my_estimate*my_estimate*number;
+		orig_estimate = 1.5f*orig_estimate - 0.5f*orig_estimate*orig_estimate*orig_estimate*number;
+		printf("my: %f orig: %f\n\n", my_estimate, orig_estimate);
+	}
+
+
+
+
+	return 0;
 	mtsrand(0);
 
 	// Create a game
