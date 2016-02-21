@@ -256,6 +256,11 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 
 		Matrix4x4 mInverse = pCharacter->GetGlobalTransform().InvertedTR();
 
+		Matrix4x4 scale;
+		scale.SetScale(1/pCharacter->m_vecScaling);
+
+		mInverse = scale*mInverse;
+
 		// The v0 and v1 are in the global coordinate system and we need to transform it to the target's
 		// local coordinate system to use axis-aligned intersection. We do so using the inverse transform matrix.
 		// http://youtu.be/-Fn4atv2NsQ
@@ -360,6 +365,19 @@ void CGame::Update(float dt)
 		pCharacter->m_vecVelocity = (m_hPlayer->GetGlobalOrigin() - pCharacter->GetGlobalOrigin()).Normalized() * flMonsterSpeed;
 
 		pCharacter->SetTranslation(pCharacter->GetGlobalOrigin() + pCharacter->m_vecVelocity * dt);
+
+		if (pCharacter->m_flShotTime >= 0)
+		{
+			float lerp = RemapClamp(Game()->GetTime(),
+				pCharacter->m_flShotTime, pCharacter->m_flShotTime + 2,
+				0, 1);
+
+			lerp = CubicInterpolation(lerp);
+
+			float size = RemapClamp(lerp, 0, 1, 2, 5);
+
+			pCharacter->m_vecScaling = Vector(size, size, size);
+		}
 	}
 
 /*
@@ -606,7 +624,11 @@ void CGame::DrawCharacters(const std::vector<CCharacter*>& apRenderList, bool bT
 				c.SetBlend(BLEND_ALPHA);
 			}
 
-			c.LoadTransform(pCharacter->GetGlobalTransform());
+			Matrix4x4 transform = pCharacter->GetGlobalTransform();
+			Matrix4x4 scale;
+			scale.SetScale(pCharacter->m_vecScaling);
+			transform *= scale;
+			c.LoadTransform(transform);
 			c.Translate(Vector(0, pCharacter->m_aabbSize.GetHeight()/2, 0)); // Move the character up so his feet don't stick in the ground.
 			pCharacter->ShotEffect(&c);
 			c.RenderBillboard(pCharacter->m_iBillboardTexture, pCharacter->m_aabbSize.vecMax.x, vecUp, vecRight);
@@ -729,7 +751,7 @@ void CGame::GameLoop()
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
-	/*CCharacter* pTarget1 = CreateCharacter();
+	CCharacter* pTarget1 = CreateCharacter();
 	pTarget1->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, 6));
 	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget1->m_aabbSize.vecMax = vecMonsterMax;
@@ -746,12 +768,12 @@ void CGame::GameLoop()
 	pTarget2->m_bTakesDamage = true;
 
 	CCharacter* pTarget3 = CreateCharacter();
-	pTarget3->SetTransform(Vector(3, 3, 3), 0, Vector(0, 1, 0), Vector(-6, 0, 8));
+	pTarget3->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(-6, 0, 8));
 	pTarget3->m_aabbSize.vecMin = vecMonsterMin;
 	pTarget3->m_aabbSize.vecMax = vecMonsterMax;
 	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
 	pTarget3->m_bEnemyAI = true;
-	pTarget3->m_bTakesDamage = true;*/
+	pTarget3->m_bTakesDamage = true;
 
 	Vector vecPropMin = Vector(-.1f, 0, -.1f);
 	Vector vecPropMax = Vector(.1f, .2f, .1f);

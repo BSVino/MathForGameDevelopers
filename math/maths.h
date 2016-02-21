@@ -68,3 +68,10 @@ inline float TriangleWave(float flTime, float flLength)
 	// The negative values are flipped to positive, so that you have a triangle wave on [0, 1]: /\/\/\/\/
 	return fabs(flRemapped);
 }
+
+inline float CubicInterpolation(float t)
+{
+	return -2*t*t*t + 3*t*t;
+}
+
+

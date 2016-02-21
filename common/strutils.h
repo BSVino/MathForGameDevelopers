@@ -189,6 +189,8 @@ inline std::string sprintf(std::string s, ...)
 	if(iCharacters >= (int)q.length())
 	{
 		q.resize(iCharacters*2);
+
+		va_start(arguments, s);
 		iCharacters = VSNPRINTF8(&q[0], q.size()-1, s.c_str(), arguments);
 	}
 	else if(iCharacters < 0)
@@ -196,6 +198,8 @@ inline std::string sprintf(std::string s, ...)
 		while (iCharacters < 0)
 		{
 			q.resize(q.size()*2);
+
+			va_start(arguments, s);
 			iCharacters = VSNPRINTF8(&q[0], q.size()-1, s.c_str(), arguments);
 		}
 	}

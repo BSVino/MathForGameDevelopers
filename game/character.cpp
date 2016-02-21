@@ -73,7 +73,7 @@ void CCharacter::BuildTransform()
 	// Produce a transformation matrix from our three TRS matrices.
 	// Order matters! http://youtu.be/7pe1xYzFCvA
 	Matrix4x4 mScaling, mRotation, mTranslation;
-	mScaling.SetScale(m_vecScaling);
+	//mScaling.SetScale(m_vecScaling);
 	mRotation.SetRotation(m_flRotationTheta, m_vecRotationAxis);
 	mTranslation.SetTranslation(m_vecTranslation);
 	SetGlobalTransform(mTranslation * mRotation * mScaling);

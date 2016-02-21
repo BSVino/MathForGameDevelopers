@@ -358,8 +358,6 @@ size_t CRenderer::LoadTextureIntoGL(string sFilename, int iClamp)
 
 size_t CRenderer::LoadTextureIntoGL(unsigned char* pclrData, int x, int y, int iClamp, bool bNearestFiltering)
 {
-	GLCall(glEnable(GL_TEXTURE_2D));
-
 	GLuint iGLId;
 	GLCall(glGenTextures(1, &iGLId));
 	GLCall(glBindTexture(GL_TEXTURE_2D, iGLId));

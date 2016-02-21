@@ -497,7 +497,6 @@ void CRenderingContext::UseProgram(class CShader* pShader)
 void CRenderingContext::SetUniform(const char* pszName, int iValue)
 {
 	int iUniform = glGetUniformLocation((GLuint)m_iProgram, pszName);
-	TAssert(iUniform > 0);
 	GLCall(glUniform1i(iUniform, iValue));
 }
 

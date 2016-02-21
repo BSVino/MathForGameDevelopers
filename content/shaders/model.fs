@@ -102,7 +102,7 @@ void main()
 
 	// Add in a diffuse if there is one. http://youtu.be/aw6Vi-_hwy0
 	if (bDiffuse)
-		vecDiffuse *= texture(iDiffuse, vecFragmentTexCoord0);
+		vecDiffuse = vecColor * texture(iDiffuse, vecFragmentTexCoord0);
 
 	// Add in some fog. http://youtu.be/YpKVXNPOXg8
 	float flDistance = flToCameraLength;
