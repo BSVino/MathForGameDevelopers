@@ -80,7 +80,8 @@ struct Seaweed
 	vec3 m_positions[2][SEAWEED_LINKS];
 };
 
-#define NUM_SEAWEEDS 29
+//#define NUM_SEAWEEDS 29
+#define NUM_SEAWEEDS 0
 Seaweed g_seaweed[NUM_SEAWEEDS];
 float g_seaweed_link_length = 3.5f;
 float g_mass_per_link = 1.0f;

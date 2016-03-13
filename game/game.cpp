@@ -44,6 +44,28 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "seaweed.h"
 
+#include "spline.h"
+
+Vector g_spline_points[SPLINE_POINTS] =
+{
+	Vector(0, 1, 0),
+	Vector(5, 1, 0),
+	Vector(10, 1, 10),
+	Vector(40, 1, 15),
+	Vector(15, 1, -10),
+	Vector(-50, 1, 30),
+	Vector(-40, 1, 19),
+	Vector(-20, 1, -5),
+	Vector(8, 1, 17),
+	Vector(9, 1, 16),
+	Vector(10, 1, 15),
+	Vector(11, 1, 14),
+	Vector(12, 1, 13),
+	Vector(13, 1, 12),
+	Vector(14, 1, 11),
+	Vector(15, 1, -15),
+};
+
 CGame::CGame(int argc, char** argv)
 	: CApplication(argc, argv)
 {
@@ -79,6 +101,9 @@ void CGame::Load()
 		for (int n = 1; n < SEAWEED_LINKS; n++)
 			g_seaweed[k].m_positions[0][n] = g_seaweed[k].m_positions[1][n] = g_seaweed[k].m_positions[0][n - 1] + vec3(0, g_seaweed_link_length, 0);
 	}
+
+	memcpy(g_spline.m_points, g_spline_points, sizeof(g_spline_points));
+	g_spline.InitializeSpline();
 }
 
 void CGame::MakePuff(const Point& p)
@@ -315,6 +340,7 @@ void CGame::Update(float dt)
 	// Update position and vecMovement. http://www.youtube.com/watch?v=c4b9lCfSDQM
 	m_hPlayer->SetTranslation(m_hPlayer->GetGlobalOrigin() + m_hPlayer->m_vecVelocity * dt);
 	m_hPlayer->m_vecVelocity = m_hPlayer->m_vecVelocity + m_hPlayer->m_vecGravity * dt;
+	//m_hPlayer->SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, SPLINE_POINTS-1)));
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
 	Vector vecTranslation = m_hPlayer->GetGlobalOrigin();
@@ -583,6 +609,62 @@ void CGame::Draw()
 
 	RenderSeaweed();
 
+	{
+		CRenderingContext c(Game()->GetRenderer(), true);
+
+		Vector camera = Game()->m_hPlayer->GetGlobalView();
+
+		c.UseProgram("model");
+
+		c.SetUniform("vecColor", Vector4D(0, 0, 0, 1));
+
+		for (int k = 0; k < SPLINE_POINTS; k++)
+		{
+			float offset = (float)((2 * k) % 5) * (float)M_TAU / 5;
+
+			Matrix4x4 m;
+			m.SetTranslation(g_spline_points[k]);
+			c.LoadTransform(m);
+			c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		}
+
+		c.ResetTransformations();
+
+		c.BeginRenderLines();
+
+		float segments_per_spline = 60.0f;
+		for (int k = 0; k < (SPLINE_POINTS - 1) * segments_per_spline - 1; k++)
+		{
+			float t0 = (float)k/segments_per_spline;
+			float t1 = (float)(k+1)/segments_per_spline;
+
+			Vector p0 = g_spline.SplineAtTime(t0);
+			Vector p1 = g_spline.SplineAtTime(t1);
+
+			c.Vertex(p0);
+			c.Vertex(p1);
+		}
+
+		c.EndRender();
+
+		Matrix4x4 m;
+		m.SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, SPLINE_POINTS-1)));
+		c.LoadTransform(m);
+		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.1f)/2, SPLINE_POINTS-1)));
+		c.LoadTransform(m);
+		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.2f)/2, SPLINE_POINTS-1)));
+		c.LoadTransform(m);
+		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.3f)/2, SPLINE_POINTS-1)));
+		c.LoadTransform(m);
+		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+	}
+
 	pRenderer->FinishRendering(&r);
 
 	// Call this last. Your rendered stuff won't appear on the screen until you call this.
@@ -751,6 +833,7 @@ void CGame::GameLoop()
 	Vector vecMonsterMin = Vector(-1, 0, -1);
 	Vector vecMonsterMax = Vector(1, 2, 1);
 
+	/*
 	CCharacter* pTarget1 = CreateCharacter();
 	pTarget1->SetTransform(Vector(2, 2, 2), 0, Vector(0, 1, 0), Vector(6, 0, 6));
 	pTarget1->m_aabbSize.vecMin = vecMonsterMin;
@@ -774,6 +857,7 @@ void CGame::GameLoop()
 	pTarget3->m_iBillboardTexture = m_iMonsterTexture;
 	pTarget3->m_bEnemyAI = true;
 	pTarget3->m_bTakesDamage = true;
+	*/
 
 	Vector vecPropMin = Vector(-.1f, 0, -.1f);
 	Vector vecPropMax = Vector(.1f, .2f, .1f);
