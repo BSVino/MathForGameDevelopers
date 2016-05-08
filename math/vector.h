@@ -20,7 +20,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 class Vector
 {
 public:
-	Vector() {}
+	Vector()
+	{
+		x = y = z = 0;
+	}
 	Vector(float X, float Y, float Z)
 	{
 		x = X;

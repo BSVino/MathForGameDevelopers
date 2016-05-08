@@ -42,12 +42,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.;.\common;.\include;.\math</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;.\common;.\include;.\math;.\glfw-2.7.9\lib\win32;.\glfw-2.7.9\lib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES;_GLFW_NO_DLOAD_GDI32;_GLFW_NO_DLOAD_WINMM</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -56,14 +56,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;.\common;.\include;.\math</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES;_GLFW_NO_DLOAD_GDI32;_GLFW_NO_DLOAD_WINMM</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;.\common;.\include;.\math;.\glfw-2.7.9\lib\win32;.\glfw-2.7.9\lib</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -75,6 +75,27 @@
     <ClCompile Include="game\game.cpp" />
     <ClCompile Include="game\handle.cpp" />
     <ClCompile Include="game\main.cpp" />
+    <ClCompile Include="glfw-2.7.9\lib\enable.c" />
+    <ClCompile Include="glfw-2.7.9\lib\fullscreen.c" />
+    <ClCompile Include="glfw-2.7.9\lib\glext.c" />
+    <ClCompile Include="glfw-2.7.9\lib\image.c" />
+    <ClCompile Include="glfw-2.7.9\lib\init.c" />
+    <ClCompile Include="glfw-2.7.9\lib\input.c" />
+    <ClCompile Include="glfw-2.7.9\lib\joystick.c" />
+    <ClCompile Include="glfw-2.7.9\lib\stream.c" />
+    <ClCompile Include="glfw-2.7.9\lib\tga.c" />
+    <ClCompile Include="glfw-2.7.9\lib\thread.c" />
+    <ClCompile Include="glfw-2.7.9\lib\time.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_dllmain.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_enable.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_fullscreen.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_glext.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_init.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_joystick.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_thread.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_time.c" />
+    <ClCompile Include="glfw-2.7.9\lib\win32\win32_window.c" />
+    <ClCompile Include="glfw-2.7.9\lib\window.c" />
     <ClCompile Include="math\collision.cpp" />
     <ClCompile Include="math\color.cpp" />
     <ClCompile Include="math\euler.cpp" />
@@ -90,9 +111,6 @@
     <ClCompile Include="renderer\renderingcontext.cpp" />
     <ClCompile Include="renderer\shaders.cpp" />
     <ClCompile Include="renderer\stanfordbunny.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\libglfw.lib" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game\character.h" />

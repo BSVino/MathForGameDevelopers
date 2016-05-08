@@ -95,12 +95,14 @@ void CGame::Load()
 	m_projectile_position[0] = m_projectile_initial_position;
 	m_projectile_velocity[0] = m_projectile_initial_velocity;
 
+#if DO_SEAWEED
 	for (int k = 0; k < sizeof(g_seaweed) / sizeof(g_seaweed[0]); k++)
 	{
 		g_seaweed[k].m_positions[0][0] = g_seaweed[k].m_positions[1][0] = vec3(g_seaweed_positions[k].x, 0, g_seaweed_positions[k].y);
 		for (int n = 1; n < SEAWEED_LINKS; n++)
 			g_seaweed[k].m_positions[0][n] = g_seaweed[k].m_positions[1][n] = g_seaweed[k].m_positions[0][n - 1] + vec3(0, g_seaweed_link_length, 0);
 	}
+#endif
 
 	memcpy(g_spline.m_points, g_spline_points, sizeof(g_spline_points));
 	g_spline.InitializeSpline();
@@ -625,7 +627,7 @@ void CGame::Draw()
 			Matrix4x4 m;
 			m.SetTranslation(g_spline_points[k]);
 			c.LoadTransform(m);
-			c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+			c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 		}
 
 		c.ResetTransformations();
@@ -648,21 +650,21 @@ void CGame::Draw()
 		c.EndRender();
 
 		Matrix4x4 m;
-		m.SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, (float)SPLINE_POINTS-1)));
 		c.LoadTransform(m);
-		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.1f)/2, SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.1f)/2, (float)SPLINE_POINTS-1)));
 		c.LoadTransform(m);
-		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.2f)/2, SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.2f)/2, (float)SPLINE_POINTS-1)));
 		c.LoadTransform(m);
-		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.3f)/2, SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.3f)/2, (float)SPLINE_POINTS-1)));
 		c.LoadTransform(m);
-		c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 	}
 
 	pRenderer->FinishRendering(&r);
@@ -1228,7 +1230,7 @@ void CGame::GraphDraw()
 
 		if (show_path)
 		{
-			float lerp = fmod(GetTime(), 1);
+			float lerp = fmod(GetTime(), 1.0f);
 			Vector position = path_start * (1-lerp) + path_end * lerp;
 			c.RenderBox(position - Vector(0.2f, 0.2f, 0.2f), position + Vector(0.2f, 0.2f, 0.2f));
 		}

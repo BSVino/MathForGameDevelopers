@@ -80,8 +80,8 @@ struct Seaweed
 	vec3 m_positions[2][SEAWEED_LINKS];
 };
 
-//#define NUM_SEAWEEDS 29
-#define NUM_SEAWEEDS 0
+#define DO_SEAWEED 0
+#define NUM_SEAWEEDS 29
 Seaweed g_seaweed[NUM_SEAWEEDS];
 float g_seaweed_link_length = 3.5f;
 float g_mass_per_link = 1.0f;
@@ -179,6 +179,9 @@ void SimulateSeaweed()
 {
 	g_seaweed_simulation_time += SEAWEED_FRAMERATE;
 
+	if (!DO_SEAWEED)
+		return;
+
 	if (!g_wave_vectors_cube[0].x)
 	{
 		g_wave_vectors_cube[0] = g_wave_vectors[0] * g_wave_vectors[0] * g_wave_vectors[0] * g_wave_magnitudes[0];
@@ -250,6 +253,9 @@ void SimulateSeaweed()
 
 void RenderSeaweed()
 {
+	if (!DO_SEAWEED)
+		return;
+
 	CRenderingContext c(Game()->GetRenderer(), true);
 
 	Vector camera = Game()->m_hPlayer->GetGlobalView();
@@ -279,7 +285,7 @@ void RenderSeaweed()
 			Matrix4x4 m;
 			m.SetTranslation(g_seaweed[k].m_positions[g_seaweed_current_list][n] + offset_vector);
 			c.LoadTransform(m);
-			c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+			c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 		}
 	}
 
