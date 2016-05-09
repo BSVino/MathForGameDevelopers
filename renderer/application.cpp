@@ -52,7 +52,6 @@ bool CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 {
 	if (!glfwInit())
 	{
-		DWORD k = GetLastError();
 		printf("glfwInit failed\n");
 		exit(1);
 	}
