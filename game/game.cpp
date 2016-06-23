@@ -46,6 +46,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #include "spline.h"
 
+#define SEGMENTS_PER_POINT 60
+
 Vector g_spline_points[SPLINE_POINTS] =
 {
 	Vector(0, 1, 0),
@@ -65,6 +67,9 @@ Vector g_spline_points[SPLINE_POINTS] =
 	Vector(14, 1, 11),
 	Vector(15, 1, -15),
 };
+
+Vector g_spline_segments[(SPLINE_POINTS+1) * SEGMENTS_PER_POINT];
+float g_spline_speed = 1.5f;
 
 CGame::CGame(int argc, char** argv)
 	: CApplication(argc, argv)
@@ -106,6 +111,27 @@ void CGame::Load()
 
 	memcpy(g_spline.m_points, g_spline_points, sizeof(g_spline_points));
 	g_spline.InitializeSpline();
+
+	float total_length = g_spline.GetTotalLength();
+
+
+
+
+
+
+
+
+	for (int k = 0; k < VArraySize(g_spline_segments); k++)
+		g_spline_segments[k] = g_spline.ConstVelocitySplineAtTime(total_length*k/VArraySize(g_spline_segments)/g_spline_speed, g_spline_speed);
+
+
+
+
+
+
+
+
+
 }
 
 void CGame::MakePuff(const Point& p)
@@ -634,14 +660,10 @@ void CGame::Draw()
 
 		c.BeginRenderLines();
 
-		float segments_per_spline = 60.0f;
-		for (int k = 0; k < (SPLINE_POINTS - 1) * segments_per_spline - 1; k++)
+		for (int k = 0; k < VArraySize(g_spline_segments)-1; k++)
 		{
-			float t0 = (float)k/segments_per_spline;
-			float t1 = (float)(k+1)/segments_per_spline;
-
-			Vector p0 = g_spline.SplineAtTime(t0);
-			Vector p1 = g_spline.SplineAtTime(t1);
+			Vector p0 = g_spline_segments[k];
+			Vector p1 = g_spline_segments[k+1];
 
 			c.Vertex(p0);
 			c.Vertex(p1);
@@ -649,20 +671,22 @@ void CGame::Draw()
 
 		c.EndRender();
 
+		float total_length = g_spline.GetTotalLength();
+
 		Matrix4x4 m;
-		m.SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, (float)SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.ConstVelocitySplineAtTime(fmod(Application()->GetTime()*10, total_length / g_spline_speed), g_spline_speed));
 		c.LoadTransform(m);
 		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.1f)/2, (float)SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.ConstVelocitySplineAtTime(fmod((Application()->GetTime()+0.1f)*10, total_length / g_spline_speed), g_spline_speed));
 		c.LoadTransform(m);
 		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.2f)/2, (float)SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.ConstVelocitySplineAtTime(fmod((Application()->GetTime()+0.2f)*10, total_length / g_spline_speed), g_spline_speed));
 		c.LoadTransform(m);
 		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 
-		m.SetTranslation(g_spline.SplineAtTime(fmod((Application()->GetTime()+0.3f)/2, (float)SPLINE_POINTS-1)));
+		m.SetTranslation(g_spline.ConstVelocitySplineAtTime(fmod((Application()->GetTime()+0.3f)*10, total_length / g_spline_speed), g_spline_speed));
 		c.LoadTransform(m);
 		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
 	}

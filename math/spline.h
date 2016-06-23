@@ -44,7 +44,7 @@ struct CubicSpline
 		}
 
 		for (int k = 0; k < SPLINE_POINTS - 1; k++)
-			m_lengths[k] = Integrate(k, 1);
+			m_lengths[k] = SimpsonsRuleSingleSpline(k, 1);
 	}
 
 	vec3 SplineAtTime(float t)
@@ -68,8 +68,11 @@ struct CubicSpline
 		return result;
 	}
 
-	float ArcLengthIntegrand(int spline, float t)
+	float ArcLengthIntegrandSingleSpline(int spline, float t)
 	{
+		VAssert(t >= -1);
+		VAssert(t <= 2);
+
 		float tt = t*t;
 
 		vec3 dv = m_coeffs[spline][1] + 2 * m_coeffs[spline][2] * t + 3 * m_coeffs[spline][3] * tt;
@@ -80,48 +83,118 @@ struct CubicSpline
 		return sqrt(xx + yy + zz);
 	}
 
-	// Composite Simpson's Rule, Burden & Faires - Numerical Analysis 9th, algorithm 4.1
-	float Integrate(int spline, float t)
+	float ArcLengthIntegrand(float t)
 	{
+		if (t < 0)
+			return ArcLengthIntegrandSingleSpline(0, t);
+
+		if (t >= SPLINE_POINTS-1)
+			return ArcLengthIntegrandSingleSpline(SPLINE_POINTS-1, fmod(t, 1));
+
+		return ArcLengthIntegrandSingleSpline((int)t, t - (int)t);
+	}
+
+	// Composite Simpson's Rule, Burden & Faires - Numerical Analysis 9th, algorithm 4.1
+	float SimpsonsRuleSingleSpline(int spline, float t)
+	{
+		VAssert(t >= -1);
+		VAssert(t <= 2);
+
 		int n = 16;
 		float h = t / n;
-		float XI0 = ArcLengthIntegrand(spline, t);
+		float XI0 = ArcLengthIntegrandSingleSpline(spline, t);
 		float XI1 = 0;
 		float XI2 = 0;
 
-		for (int i = 0; i < n; i++)
-		{
-			float X = i*h;
-			if (i % 2 == 0)
-				XI2 += ArcLengthIntegrand(spline, X);
-			else
-				XI1 += ArcLengthIntegrand(spline, X);
-		}
+		for (int i = 0; i < n; i += 2)
+			XI2 += ArcLengthIntegrandSingleSpline(spline, i*h);
+
+		for (int i = 1; i < n; i += 2)
+			XI1 += ArcLengthIntegrandSingleSpline(spline, i*h);
 
 		float XI = h * (XI0 + 2 * XI2 + 4 * XI1) * (1.0f / 3);
 		return XI;
 	}
 
-	vec3 ConstVelocitySplineAtTime(float t)
+	float SimpsonsRule(float t0, float t1)
 	{
-		int spline = 0;
-		while (t > m_lengths[spline])
+		float multiplier = 1;
+		if (t0 > t1)
 		{
-			t -= m_lengths[spline];
-			spline += 1;
+			std::swap(t0, t1);
+			multiplier = -1;
 		}
 
-		float s = t / m_lengths[spline]; // Here's our initial guess.
+		int first_spline = (int)t0;
+		if (first_spline < 0)
+			first_spline = 0;
 
-		// Do some Newton-Rhapsons.
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
-		s = s - (Integrate(spline, s) - t) / ArcLengthIntegrand(spline, s);
+		int last_spline = (int)t1;
+		if (last_spline >= SPLINE_POINTS-1)
+			last_spline = SPLINE_POINTS-2;
 
-		return SplineAtTime(spline + s);
+		if (first_spline == last_spline)
+			return (SimpsonsRuleSingleSpline(last_spline, t1 - last_spline) - SimpsonsRuleSingleSpline(first_spline, t0 - first_spline)) * multiplier;
+
+		float sum = m_lengths[first_spline] - SimpsonsRuleSingleSpline(first_spline, t0);
+
+		for (int k = first_spline+1; k < last_spline; k++)
+			sum += m_lengths[k];
+
+		sum += SimpsonsRuleSingleSpline(last_spline, t1 - last_spline);
+
+		return sum * multiplier;
+	}
+
+	vec3 ConstVelocitySplineAtTime(float t, float speed)
+	{
+		float total_length = GetTotalLength();
+		float desired_distance = fmod(t * speed, total_length);
+
+		float t_last = SPLINE_POINTS * desired_distance / total_length;
+		float t_next = t_last;
+
+		auto g = [this, desired_distance](float t) -> float {
+			return SimpsonsRule(0, t) - desired_distance;
+		};
+
+		auto L = [this](float t) -> float {
+			return ArcLengthIntegrand(t);
+		};
+
+		float t_max = SPLINE_POINTS;
+		float t_min = -0.1f;
+
+		while (t_max - t_min > 0.5f)
+		{
+			float t_mid = (t_max + t_min)/2;
+			if (g(t_min) * g(t_mid) < 0)
+				t_max = t_mid;
+			else
+				t_min = t_mid;
+		}
+
+		t_next = (t_max + t_min)/2;
+
+		do {
+			t_last = t_next;
+			t_next = t_last - g(t_last) / L(t_last);
+		} while(fabs(t_last - t_next) > 0.001f);
+
+		// Because of root finding it may be slightly negative sometimes.
+		VAssert(t_next >= -0.1f && t_next <= 999999);
+
+		return SplineAtTime(t_next);
+	}
+
+	float GetTotalLength()
+	{
+		float sum = 0;
+
+		for (int k = 0; k < VArraySize(m_lengths); k++)
+			sum += m_lengths[k];
+
+		return sum;
 	}
 };
 

@@ -39,57 +39,9 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #define VTB_IMPLEMENTATION
 #include "vtb.h"
 
-using std::vector;
-
-
-// This is actually midpoint rule
-double BoringRectangles(double t0, double t1, int n)
-{
-	double h = (t1-t0) / n;
-	double sum = 0;
-
-	for (int k = 0; k < n; k++)
-	{
-		double t = t0 + k*h + h/2;
-		double rectangle_area = h * exp(t);
-		sum += rectangle_area;
-	}
-
-	return sum;
-}
-
-double CompositeSimpsonsRule(double t0, double t1, int n)
-{
-	double h = (t1-t0) / n;
-	double endpoints = exp(t0) + exp(t1);
-	double X4 = 0;
-	double X2 = 0;
-
-	for (int k = 1; k < n; k += 2)
-	{
-		double t = t0 + k*h;
-		X4 += exp(t);
-	}
-
-	for (int k = 2; k < n; k += 2)
-	{
-		double t = t0 + k*h;
-		X2 += exp(t);
-	}
-
-	return (h / 3) * (endpoints + 4 * X4 + 2 * X2);
-}
-
-
 
 int main(int argc, char* argv[])
 {
-	printf("Actual value:      %.16f\n", exp(1) - 1);
-	printf("Boring rectangles: %.16f\n", BoringRectangles(0, 1, 64));
-	printf("Composite Simpson: %.16f\n", CompositeSimpsonsRule(0, 1, 64));
-
-	mtsrand(0);
-
 	// Create a game
 	CGame game(argc, argv);
 
