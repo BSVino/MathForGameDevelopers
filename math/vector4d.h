@@ -35,6 +35,7 @@ public:
 public:
 	const Vector4D	operator+(const Vector4D& v) const;
 	const Vector4D	operator-(const Vector4D& v) const;
+	const Vector4D	operator*(float s) const;
 
 	bool	operator==(const Vector4D& v) const
 	{
@@ -94,3 +95,14 @@ inline const Vector4D Vector4D::operator-(const Vector4D& v) const
 {
 	return Vector4D(x-v.x, y-v.y, z-v.z, w-v.w);
 }
+
+inline const Vector4D Vector4D::operator*(float s) const
+{
+	return Vector4D(s*x, s*y, s*z, s*w);
+}
+
+inline const Vector4D operator*(float s, const Vector4D& v)
+{
+	return Vector4D(s*v.x, s*v.y, s*v.z, s*v.w);
+}
+

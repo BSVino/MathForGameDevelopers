@@ -117,6 +117,20 @@ public:
 	size_t m_iMeshVB;
 	size_t m_iMeshSize;
 
+	float m_particle_time = 0;
+
+	vector<vector<Vector>> m_particle_paths;
+
+	Vector m_particle_variable_position;
+	Vector m_particle_fixed_position;
+
+	Vector m_satellite_euler_variable_position;
+	Vector m_satellite_euler_variable_velocity;
+
+	float m_satellite_time = 0;
+	Vector m_satellite_euler_position;
+	Vector m_satellite_euler_velocity;
+
 #define MAX_PROJECTILES 8
 	float m_projectile_initial_time;
 	float m_projectile_break_time;

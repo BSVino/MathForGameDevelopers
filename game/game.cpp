@@ -25,6 +25,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 
 #if defined(__APPLE__)
 #include <OpenGL/glu.h>
+#include <unistd.h>
 #else
 #include <GL/glu.h>
 #endif
@@ -114,24 +115,19 @@ void CGame::Load()
 
 	float total_length = g_spline.GetTotalLength();
 
-
-
-
-
-
-
-
 	for (int k = 0; k < VArraySize(g_spline_segments); k++)
 		g_spline_segments[k] = g_spline.ConstVelocitySplineAtTime(total_length*k/VArraySize(g_spline_segments)/g_spline_speed, g_spline_speed);
 
+	m_particle_variable_position = Vector(1, 2, 0);
+	m_particle_fixed_position = Vector(1, 2, 0);
 
+	m_satellite_euler_variable_position = Vector(2, 2, 1);
+	m_satellite_euler_variable_velocity = Vector(2, 0, 0);
 
+	m_satellite_euler_position = Vector(2, 2, 1);
+	m_satellite_euler_velocity = Vector(2, 0, 0);
 
-
-
-
-
-
+	m_particle_paths.resize(2);
 }
 
 void CGame::MakePuff(const Point& p)
@@ -285,6 +281,9 @@ bool CGame::MouseInput(int iButton, tinker_mouse_state_t iState)
 		return true;
 	}
 
+	if (iButton == TINKER_KEY_MOUSE_RIGHT && iState == TINKER_MOUSE_PRESSED)
+		sleep(1);
+
 	return false;
 }
 
@@ -340,6 +339,18 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 		return true;
 
 	return false;
+}
+
+static Vector VelocityField(Vector position, float time)
+{
+	Vector to_origin = Vector(0, 2, 0)-position;
+	float return_to_origin_strength = to_origin.Length() / 10;
+	float return_to_origin = return_to_origin_strength*return_to_origin_strength;
+
+	float x_warp = sin(position.x + time);
+	float z_warp = cos(position.z + time);
+
+	return to_origin.Normalized() * return_to_origin + x_warp * Vector(1, 0, 0) + z_warp * Vector(0, 0, 1);
 }
 
 // In this Update() function we need to update all of our characters. Move them around or whatever we want to do.
@@ -470,6 +481,56 @@ void CGame::Update(float dt)
 
 	while (g_seaweed_simulation_time < Game()->GetTime())
 		SimulateSeaweed();
+
+
+
+
+
+
+
+	// Velocity field
+	{
+		m_particle_variable_position = m_particle_variable_position + VelocityField(m_particle_variable_position, Game()->GetTime()) * dt;
+		m_particle_paths[0].push_back(m_particle_variable_position);
+
+		float h = 1.0f/60.0f;
+		for (; m_particle_time < Game()->GetTime(); m_particle_time += h)
+		{
+			m_particle_fixed_position = m_particle_fixed_position + VelocityField(m_particle_fixed_position, m_particle_time) * h;
+			m_particle_paths[1].push_back(m_particle_fixed_position);
+		}
+	}
+
+
+
+
+
+
+
+
+	// Satellites
+	{
+		Vector center_of_gravity(0, 2, 0);
+		float g = 10;
+		float m = 1;
+		float h = 1.0f/60.0f;
+
+		auto get_gravity_acceleration = [center_of_gravity, g](Vector position)
+		{
+			Vector to_center = (center_of_gravity - position);
+			float r = to_center.Length();
+			return to_center * (g / (r*r*r));
+		};
+
+		m_satellite_euler_variable_position = m_satellite_euler_variable_position + m_satellite_euler_variable_velocity * dt;
+		m_satellite_euler_variable_velocity = m_satellite_euler_variable_velocity + get_gravity_acceleration(m_satellite_euler_variable_position) * dt;
+
+		for (; m_satellite_time < Game()->GetTime(); m_satellite_time += h)
+		{
+			m_satellite_euler_position = m_satellite_euler_position + m_satellite_euler_velocity * h;
+			m_satellite_euler_velocity = m_satellite_euler_velocity + get_gravity_acceleration(m_satellite_euler_position) * h;
+		}
+	}
 }
 
 void CGame::Draw()
@@ -483,7 +544,7 @@ void CGame::Draw()
 	CRenderer* pRenderer = GetRenderer();
 
 	// Tell the renderer how to set up the camera.
-	pRenderer->SetCameraPosition(m_hPlayer->GetGlobalOrigin() - vecForward * 6 + vecUp * 3 - vecRight * 0.5f);
+	pRenderer->SetCameraPosition(m_hPlayer->GetGlobalOrigin() - vecForward * 3 + vecUp * 3 - vecRight * 0.5f);
 	pRenderer->SetCameraDirection(vecForward);
 	pRenderer->SetCameraUp(Vector(0, 1, 0));
 	pRenderer->SetCameraFOV(90);
@@ -637,6 +698,7 @@ void CGame::Draw()
 
 	RenderSeaweed();
 
+	if (false)
 	{
 		CRenderingContext c(Game()->GetRenderer(), true);
 
@@ -689,6 +751,86 @@ void CGame::Draw()
 		m.SetTranslation(g_spline.ConstVelocitySplineAtTime(fmod((Application()->GetTime()+0.3f)*10, total_length / g_spline_speed), g_spline_speed));
 		c.LoadTransform(m);
 		c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
+	}
+
+	// Velocity field & Satellites
+	{
+		CRenderingContext c(Game()->GetRenderer(), true);
+
+		Vector camera = Game()->m_hPlayer->GetGlobalView();
+
+		c.UseProgram("model");
+
+		c.SetUniform("vecColor", Vector4D(0, 0, 0, 1));
+		c.BeginRenderLines();
+
+		for (int x = -10; x < 10; x++)
+		{
+			for (int y = -10; y < 10; y++)
+			{
+				Vector position = Vector(x, 2, y);
+				c.Vertex(position);
+				c.Vertex(position + VelocityField(position, Game()->GetTime()));
+			}
+		}
+
+		c.EndRender();
+
+		for (int x = -10; x < 10; x++)
+		{
+			for (int y = -10; y < 10; y++)
+			{
+				Vector position = Vector(x, 2, y);
+				Matrix4x4 m;
+				m.SetTranslation(position);
+				c.LoadTransform(m);
+				c.RenderBox(Vector(-0.02f, -0.02f, -0.02f), Vector(0.02f, 0.02f, 0.02f));
+			}
+		}
+
+		Vector4D path_colors[] = {
+			Vector4D(1, 0, 0, 1),
+			Vector4D(0, 1, 0, 1),
+		};
+
+		auto draw_particle = [&c, path_colors, this](Vector position, Vector velocity, int& path)
+		{
+			c.ResetTransformations();
+
+			c.SetUniform("vecColor", path_colors[path] * 0.5f);
+			c.BeginRenderLines();
+			for (int k = 0; k < m_particle_paths[path].size()-1; k++)
+			{
+				c.Vertex(m_particle_paths[path][k]);
+				c.Vertex(m_particle_paths[path][k+1]);
+			}
+			c.EndRender();
+
+			c.SetUniform("vecColor", path_colors[path]);
+
+			c.BeginRenderLines();
+				c.Vertex(position);
+				c.Vertex(position + velocity);
+			c.EndRender();
+
+			Matrix4x4 m;
+			m.SetTranslation(position);
+			c.LoadTransform(m);
+			c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
+
+			path++;
+		};
+
+		int path = 0;
+
+		draw_particle(m_particle_variable_position, VelocityField(m_particle_variable_position, Game()->GetTime()), path);
+		draw_particle(m_particle_fixed_position, VelocityField(m_particle_fixed_position, Game()->GetTime()), path);
+
+#if 0
+		draw_particle(m_satellite_euler_variable_position, m_satellite_euler_variable_velocity, Vector4D(1, 0, 0, 1));
+
+		draw_particle(m_satellite_euler_position, m_satellite_euler_velocity, Vector4D(0, 1, 0, 1));
+#endif
 	}
 
 	pRenderer->FinishRendering(&r);
@@ -925,8 +1067,8 @@ void CGame::GameLoop()
 		float dt = flCurrentTime - flPreviousTime;
 
 		// Keep dt from growing too large.
-		if (dt > 0.15f)
-			dt = 0.15f;
+		//if (dt > 0.15f)
+		//	dt = 0.15f;
 
 		Update(dt);
 
