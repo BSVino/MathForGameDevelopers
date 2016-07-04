@@ -124,12 +124,16 @@ public:
 	Vector m_particle_variable_position;
 	Vector m_particle_fixed_position;
 
-	Vector m_satellite_euler_variable_position;
-	Vector m_satellite_euler_variable_velocity;
-
 	float m_satellite_time = 0;
-	Vector m_satellite_euler_position;
-	Vector m_satellite_euler_velocity;
+	struct Satellite
+	{
+		Vector m_position;
+		Vector m_last_position;
+		Vector m_velocity;
+		float  m_radius;
+	};
+
+	Satellite m_satellites[2];
 
 #define MAX_PROJECTILES 8
 	float m_projectile_initial_time;

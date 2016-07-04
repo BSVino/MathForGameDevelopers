@@ -121,13 +121,15 @@ void CGame::Load()
 	m_particle_variable_position = Vector(1, 2, 0);
 	m_particle_fixed_position = Vector(1, 2, 0);
 
-	m_satellite_euler_variable_position = Vector(2, 2, 1);
-	m_satellite_euler_variable_velocity = Vector(2, 0, 0);
+	int num_satellites = VArraySize(m_satellites);
+	for (int k = 0; k < num_satellites; k++)
+	{
+		m_satellites[k].m_position = Vector(1, 2, 1);
+		m_satellites[k].m_velocity = Vector(1, 0, -3);
+		m_satellites[k].m_last_position = m_satellites[k].m_position - m_satellites[k].m_velocity * 1.0f/60.0f;
+	}
 
-	m_satellite_euler_position = Vector(2, 2, 1);
-	m_satellite_euler_velocity = Vector(2, 0, 0);
-
-	m_particle_paths.resize(2);
+	m_particle_paths.resize(num_satellites);
 }
 
 void CGame::MakePuff(const Point& p)
@@ -377,8 +379,8 @@ void CGame::Update(float dt)
 	m_hPlayer->m_vecVelocity.y = flSaveY;
 
 	// Update position and vecMovement. http://www.youtube.com/watch?v=c4b9lCfSDQM
-	m_hPlayer->SetTranslation(m_hPlayer->GetGlobalOrigin() + m_hPlayer->m_vecVelocity * dt);
 	m_hPlayer->m_vecVelocity = m_hPlayer->m_vecVelocity + m_hPlayer->m_vecGravity * dt;
+	m_hPlayer->SetTranslation(m_hPlayer->GetGlobalOrigin() + m_hPlayer->m_vecVelocity * dt);
 	//m_hPlayer->SetTranslation(g_spline.SplineAtTime(fmod(Application()->GetTime()/2, SPLINE_POINTS-1)));
 
 	// Make sure the player doesn't fall through the floor. The y dimension is up/down, and the floor is at 0.
@@ -482,55 +484,78 @@ void CGame::Update(float dt)
 	while (g_seaweed_simulation_time < Game()->GetTime())
 		SimulateSeaweed();
 
-
-
-
-
-
-
 	// Velocity field
+	if (0)
 	{
 		m_particle_variable_position = m_particle_variable_position + VelocityField(m_particle_variable_position, Game()->GetTime()) * dt;
-		m_particle_paths[0].push_back(m_particle_variable_position);
 
 		float h = 1.0f/60.0f;
 		for (; m_particle_time < Game()->GetTime(); m_particle_time += h)
 		{
 			m_particle_fixed_position = m_particle_fixed_position + VelocityField(m_particle_fixed_position, m_particle_time) * h;
-			m_particle_paths[1].push_back(m_particle_fixed_position);
 		}
 	}
-
-
-
-
-
 
 
 
 	// Satellites
+	[this](){
 	{
 		Vector center_of_gravity(0, 2, 0);
-		float g = 10;
-		float m = 1;
+		float G = 1; // This is not the real gravitational constant, it's a much larger one for our test system.
 		float h = 1.0f/60.0f;
+		float mass_satellite = 1; // This doesn't really matter for our gravity calculations, as Galileo showed
+		float mass_sun = 10.0f;
 
-		auto get_gravity_acceleration = [center_of_gravity, g](Vector position)
+		auto gravity = [center_of_gravity, G, mass_sun](Vector position)
 		{
 			Vector to_center = (center_of_gravity - position);
 			float r = to_center.Length();
-			return to_center * (g / (r*r*r));
+			return to_center * ((G * mass_sun) / (r*r*r));
 		};
-
-		m_satellite_euler_variable_position = m_satellite_euler_variable_position + m_satellite_euler_variable_velocity * dt;
-		m_satellite_euler_variable_velocity = m_satellite_euler_variable_velocity + get_gravity_acceleration(m_satellite_euler_variable_position) * dt;
 
 		for (; m_satellite_time < Game()->GetTime(); m_satellite_time += h)
 		{
-			m_satellite_euler_position = m_satellite_euler_position + m_satellite_euler_velocity * h;
-			m_satellite_euler_velocity = m_satellite_euler_velocity + get_gravity_acceleration(m_satellite_euler_position) * h;
+			for (int k = 0; k < VArraySize(m_satellites); k++)
+			{
+				Vector xn = m_satellites[k].m_position;
+				Vector vn = m_satellites[k].m_velocity;
+
+				auto v = [vn, gravity](Vector x, float h) -> Vector
+				{
+					return vn + gravity(x) * h;
+				};
+
+				auto a = [xn, gravity](Vector v, float h) -> Vector
+				{
+					return gravity(xn) + gravity(xn + v*h) * h;
+				};
+
+				switch (k)
+				{
+				case 0: {
+					// Standard Euler
+					m_satellites[k].m_position = xn + h * v(xn, 0);
+					m_satellites[k].m_velocity = vn + h * a(vn, 0);
+				} break;
+
+				case 1: {
+					// Semi-Implicit Euler
+					m_satellites[k].m_position = xn + h * v(xn, 0);
+					m_satellites[k].m_velocity = vn + h * a(vn, h);
+				} break;
+				}
+
+				float potential_energy = -G * mass_sun * mass_satellite / ((xn - center_of_gravity).Length());
+				float kinetic_energy = 0.5f * mass_satellite * vn.LengthSqr();
+
+				m_satellites[k].m_radius = (potential_energy + kinetic_energy) / 10 + 0.3f;
+
+				m_particle_paths[k].push_back(m_satellites[k].m_position);
+			}
 		}
 	}
+	}();
 }
 
 void CGame::Draw()
@@ -761,6 +786,7 @@ void CGame::Draw()
 
 		c.UseProgram("model");
 
+#if 0
 		c.SetUniform("vecColor", Vector4D(0, 0, 0, 1));
 		c.BeginRenderLines();
 
@@ -787,13 +813,26 @@ void CGame::Draw()
 				c.RenderBox(Vector(-0.02f, -0.02f, -0.02f), Vector(0.02f, 0.02f, 0.02f));
 			}
 		}
+#endif
+
+		Matrix4x4 m;
+		c.SetUniform("vecColor", Vector4D(1, 0.8f, 0, 1));
+		m.SetTranslation(Vector(0, 2, 0));
+		c.LoadTransform(m);
+		c.RenderBox(Vector(-0.2f, -0.2f, -0.2f), Vector(0.2f, 0.2f, 0.2f));
 
 		Vector4D path_colors[] = {
 			Vector4D(1, 0, 0, 1),
 			Vector4D(0, 1, 0, 1),
+			Vector4D(0, 0, 1, 1),
+			Vector4D(1, 1, 1, 1),
+			Vector4D(0, 0, 0, 1),
+			Vector4D(1, 1, 0, 1),
 		};
 
-		auto draw_particle = [&c, path_colors, this](Vector position, Vector velocity, int& path)
+		int path = 0;
+
+		auto draw_particle = [&c, path_colors, this, &path](Vector position, Vector velocity, float radius)
 		{
 			c.ResetTransformations();
 
@@ -816,21 +855,17 @@ void CGame::Draw()
 			Matrix4x4 m;
 			m.SetTranslation(position);
 			c.LoadTransform(m);
-			c.RenderBox(Vector(-0.1f, -0.1f, -0.1f), Vector(0.1f, 0.1f, 0.1f));
+
+			c.RenderBox(Vector(-radius, -radius, -radius), Vector(radius, radius, radius));
 
 			path++;
 		};
 
-		int path = 0;
+		//draw_particle(m_particle_variable_position, VelocityField(m_particle_variable_position, Game()->GetTime()));
+		//draw_particle(m_particle_fixed_position, VelocityField(m_particle_fixed_position, Game()->GetTime()));
 
-		draw_particle(m_particle_variable_position, VelocityField(m_particle_variable_position, Game()->GetTime()), path);
-		draw_particle(m_particle_fixed_position, VelocityField(m_particle_fixed_position, Game()->GetTime()), path);
-
-#if 0
-		draw_particle(m_satellite_euler_variable_position, m_satellite_euler_variable_velocity, Vector4D(1, 0, 0, 1));
-
-		draw_particle(m_satellite_euler_position, m_satellite_euler_velocity, Vector4D(0, 1, 0, 1));
-#endif
+		for (int k = 0; k < VArraySize(m_satellites); k++)
+			draw_particle(m_satellites[k].m_position, m_satellites[k].m_velocity, m_satellites[k].m_radius);
 	}
 
 	pRenderer->FinishRendering(&r);
