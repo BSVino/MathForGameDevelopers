@@ -118,13 +118,17 @@ public:
 	size_t m_iMeshSize;
 
 	float m_particle_time = 0;
+	float m_particle_timestep = 1.0f/60;
+	float m_particle_scale = 2;
 
 	vector<vector<Vector>> m_particle_paths;
 
-	Vector m_particle_variable_position;
-	Vector m_particle_fixed_position;
+	Vector m_particles[3];
 
+	Vector m_satellite_x0 = Vector(1, 2, 1);
+	Vector m_satellite_v0 = Vector(1, 0, -3);
 	float m_satellite_time = 0;
+	float m_satellite_timestep = 1.0f/60;
 	struct Satellite
 	{
 		Vector m_position;
@@ -133,7 +137,9 @@ public:
 		float  m_radius;
 	};
 
-	Satellite m_satellites[2];
+	Satellite m_satellites[5];
+
+	Vector m_stars[1];
 
 #define MAX_PROJECTILES 8
 	float m_projectile_initial_time;

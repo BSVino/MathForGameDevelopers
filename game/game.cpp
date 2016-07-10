@@ -118,18 +118,30 @@ void CGame::Load()
 	for (int k = 0; k < VArraySize(g_spline_segments); k++)
 		g_spline_segments[k] = g_spline.ConstVelocitySplineAtTime(total_length*k/VArraySize(g_spline_segments)/g_spline_speed, g_spline_speed);
 
-	m_particle_variable_position = Vector(1, 2, 0);
-	m_particle_fixed_position = Vector(1, 2, 0);
-
+	int num_particles = VArraySize(m_particles);
 	int num_satellites = VArraySize(m_satellites);
-	for (int k = 0; k < num_satellites; k++)
+	m_particle_paths.resize(num_satellites + num_particles);
+	int path_index = 0;
+
+	for (int k = 0; k < num_particles; k++)
 	{
-		m_satellites[k].m_position = Vector(1, 2, 1);
-		m_satellites[k].m_velocity = Vector(1, 0, -3);
-		m_satellites[k].m_last_position = m_satellites[k].m_position - m_satellites[k].m_velocity * 1.0f/60.0f;
+		m_particles[k] = Vector(-2, 2, 1.0f/3);
+		m_particle_paths[path_index++].push_back(Vector(m_particles[k].x*m_particle_scale, 2, m_particles[k].z*m_particle_scale));
 	}
 
-	m_particle_paths.resize(num_satellites);
+	for (int k = 0; k < num_satellites; k++)
+	{
+		m_satellites[k].m_position = m_satellite_x0;
+		m_satellites[k].m_velocity = m_satellite_v0;
+		m_satellites[k].m_last_position = m_satellites[k].m_position - m_satellites[k].m_velocity * m_satellite_timestep;
+		m_particle_paths[path_index++].push_back(Vector(m_satellites[k].m_position.x, 2, m_satellites[k].m_position.z));
+	}
+
+	m_stars[0] = Vector(0, 2, 0);
+	m_stars[1] = Vector(-0.5, 2, -0.5);
+	m_stars[2] = Vector(0, 2, -0.5);
+	m_stars[3] = Vector(-0.5, 2, 0);
+	m_stars[4] = Vector(-0.25, 2, -0.25);
 }
 
 void CGame::MakePuff(const Point& p)
@@ -345,14 +357,7 @@ bool CGame::TraceLine(const Vector& v0, const Vector& v1, Vector& vecIntersectio
 
 static Vector VelocityField(Vector position, float time)
 {
-	Vector to_origin = Vector(0, 2, 0)-position;
-	float return_to_origin_strength = to_origin.Length() / 10;
-	float return_to_origin = return_to_origin_strength*return_to_origin_strength;
-
-	float x_warp = sin(position.x + time);
-	float z_warp = cos(position.z + time);
-
-	return to_origin.Normalized() * return_to_origin + x_warp * Vector(1, 0, 0) + z_warp * Vector(0, 0, 1);
+	return Vector(-(position.x+1)*(position.x+3), 0, -5*position.z+5*time*time+2*time);
 }
 
 // In this Update() function we need to update all of our characters. Move them around or whatever we want to do.
@@ -484,75 +489,212 @@ void CGame::Update(float dt)
 	while (g_seaweed_simulation_time < Game()->GetTime())
 		SimulateSeaweed();
 
-	// Velocity field
-	if (0)
-	{
-		m_particle_variable_position = m_particle_variable_position + VelocityField(m_particle_variable_position, Game()->GetTime()) * dt;
+	int path_index = 0;
 
-		float h = 1.0f/60.0f;
+	// Velocity field
+	{
+		float t = Game()->GetTime();
+		float h = m_particle_timestep;
 		for (; m_particle_time < Game()->GetTime(); m_particle_time += h)
 		{
-			m_particle_fixed_position = m_particle_fixed_position + VelocityField(m_particle_fixed_position, m_particle_time) * h;
+			for (int k = 0; k < VArraySize(m_particles); k++)
+			{
+#define FIELD_EULER    1
+#define FIELD_MIDPOINT 1
+#define FIELD_RK4      1
+
+				Vector xn = m_particles[k];
+				float t = m_particle_time;
+
+				switch (k)
+				{
+				default: {
+				} break;
+#if FIELD_EULER
+				case 0: {
+					// Standard Euler
+					m_particles[k] = xn + h * VelocityField(xn, t);
+				} break;
+#endif
+
+#if FIELD_MIDPOINT
+				case 1: {
+					// Midpoint
+					Vector midpoint_position = xn + (h/2) * VelocityField(xn, t);
+					m_particles[k] = xn + VelocityField(midpoint_position, t + h/2) * h;
+				} break;
+#endif
+
+#if FIELD_RK4
+				case 2: {
+					// RK4
+					Vector k1 = VelocityField(xn, t);
+					Vector k2 = VelocityField(xn + h/2 * k1, t + h/2);
+					Vector k3 = VelocityField(xn + h/2 * k2, t + h/2);
+					Vector k4 = VelocityField(xn + h * k3, t + h);
+					m_particles[k] = xn + h/6 * (k1 + 2*k2 + 2*k3 + k4);
+				} break;
+#endif
+				}
+
+				m_particle_paths[k].push_back(Vector(m_particles[k].x*m_particle_scale, 2, m_particles[k].z*m_particle_scale));
+			}
 		}
 	}
 
-
+	path_index = VArraySize(m_particles);
 
 	// Satellites
-	[this](){
+	[this, &path_index](){
 	{
-		Vector center_of_gravity(0, 2, 0);
 		float G = 1; // This is not the real gravitational constant, it's a much larger one for our test system.
-		float h = 1.0f/60.0f;
+		float h = m_satellite_timestep;
 		float mass_satellite = 1; // This doesn't really matter for our gravity calculations, as Galileo showed
 		float mass_sun = 10.0f;
+		float t = Game()->GetTime();
+		Vector player_position = m_hPlayer->GetGlobalOrigin();
 
-		auto gravity = [center_of_gravity, G, mass_sun](Vector position)
+		auto force_acceleration = [this, G, mass_sun, t, player_position](Vector position, Vector velocity) -> Vector
 		{
-			Vector to_center = (center_of_gravity - position);
-			float r = to_center.Length();
-			return to_center * ((G * mass_sun) / (r*r*r));
+			Vector avg(0,0,0);
+
+			Vector gravity(0,0,0);
+			for (int k = 0; k < VArraySize(m_stars); k++)
+			{
+				Vector to_center = (m_stars[k] - position);
+				float r = to_center.Length();
+				gravity = gravity + to_center * ((G * mass_sun) / (r*r*r));
+
+				avg = avg + m_stars[k];
+			}
+
+			avg = avg / VArraySize(m_stars);
+			Vector to_center = (avg - position);
+
+			Vector drag;// = -velocity.Normalized() * (velocity.LengthSqr() / (float)(1<<6));
+
+			// Boost around the sun if you get too close.
+			float boost_around_sun_strength = std::min(1/to_center.Length() / 10, 10.0f);
+			Vector boosters;// = velocity * boost_around_sun_strength;
+
+			// Boost towards the sun if you get too far.
+			float boost_toward_sun_strength = std::min(to_center.Length() / 30, 10.0f);
+			//boosters = boosters + to_center.Normalized() * boost_toward_sun_strength;
+
+			// Boost away from the player
+			Vector to_player = (player_position-position);
+			to_player.y = 0;
+			//boosters = boosters - to_player.Normalized() * 2 / to_player.Length();
+
+			return gravity + drag + boosters;
 		};
 
 		for (; m_satellite_time < Game()->GetTime(); m_satellite_time += h)
 		{
+			float t = m_satellite_time;
 			for (int k = 0; k < VArraySize(m_satellites); k++)
 			{
 				Vector xn = m_satellites[k].m_position;
 				Vector vn = m_satellites[k].m_velocity;
 
-				auto v = [vn, gravity](Vector x, float h) -> Vector
+				auto v = [vn, force_acceleration](Vector x, float h) -> Vector
 				{
-					return vn + gravity(x) * h;
+					return vn + force_acceleration(x, vn) * h;
 				};
 
-				auto a = [xn, gravity](Vector v, float h) -> Vector
+				auto a = [xn, force_acceleration](Vector v, float h) -> Vector
 				{
-					return gravity(xn) + gravity(xn + v*h) * h;
+					return force_acceleration(xn, v) + force_acceleration(xn + v*h, v) * h;
 				};
+
+#define PHYS_EULER    1
+#define PHYS_SI_EULER 1
+#define PHYS_VERLET   1
+#define PHYS_MIDPOINT 1
+#define PHYS_RK4      1
 
 				switch (k)
 				{
+				default: {
+				} break;
+#if PHYS_EULER
 				case 0: {
 					// Standard Euler
 					m_satellites[k].m_position = xn + h * v(xn, 0);
 					m_satellites[k].m_velocity = vn + h * a(vn, 0);
 				} break;
+#endif
 
+#if PHYS_SI_EULER
 				case 1: {
 					// Semi-Implicit Euler
-					m_satellites[k].m_position = xn + h * v(xn, 0);
-					m_satellites[k].m_velocity = vn + h * a(vn, h);
+					m_satellites[k].m_position = xn + h * v(xn, h);
+					m_satellites[k].m_velocity = vn + h * a(vn, 0);
 				} break;
+#endif
+
+#if PHYS_VERLET
+				case 2: {
+					// Verlet
+					Vector position = m_satellites[k].m_position;
+
+					m_satellites[k].m_position = 2 * m_satellites[k].m_position - m_satellites[k].m_last_position + a(vn, 0) * (h*h);
+					m_satellites[k].m_last_position = position;
+
+					// Not necessary, just for rendering the velocity arrow in our demo
+					m_satellites[k].m_velocity = (m_satellites[k].m_position - m_satellites[k].m_last_position) / h;
+				} break;
+#endif
+
+#if PHYS_MIDPOINT
+				case 3: {
+					// Midpoint
+					Vector midpoint_velocity = vn + (h/2) * a(vn, 0);
+					m_satellites[k].m_velocity = vn + a(midpoint_velocity, h/2) * h;
+
+					Vector midpoint_position = xn + (h/2) * v(xn, 0);
+					m_satellites[k].m_position = xn + v(midpoint_position, h/2) * h;
+				} break;
+#endif
+
+#if PHYS_RK4
+				case 4: {
+					// RK4
+					{
+						Vector k1 = a(vn, 0);
+						Vector k2 = a(vn + h/2 * k1, h/2);
+						Vector k3 = a(vn + h/2 * k2, h/2);
+						Vector k4 = a(vn + h * k3, h);
+						m_satellites[k].m_velocity = vn + h/6 * (k1 + 2*k2 + 2*k3 + k4);
+					}
+
+					{
+						Vector k1 = v(xn, 0);
+						Vector k2 = v(xn + h/2 * k1, h/2);
+						Vector k3 = v(xn + h/2 * k2, h/2);
+						Vector k4 = v(xn + h * k3, h);
+						m_satellites[k].m_position = xn + h/6 * (k1 + 2*k2 + 2*k3 + k4);
+					}
+				} break;
+#endif
 				}
 
-				float potential_energy = -G * mass_sun * mass_satellite / ((xn - center_of_gravity).Length());
-				float kinetic_energy = 0.5f * mass_satellite * vn.LengthSqr();
-
-				m_satellites[k].m_radius = (potential_energy + kinetic_energy) / 10 + 0.3f;
-
-				m_particle_paths[k].push_back(m_satellites[k].m_position);
+				m_particle_paths[path_index + k].push_back(Vector(m_satellites[k].m_position.x, 2, m_satellites[k].m_position.z));
 			}
+		}
+
+		for (int k = 0; k < VArraySize(m_satellites); k++)
+		{
+			Vector xn = m_satellites[k].m_position;
+			Vector vn = m_satellites[k].m_velocity;
+
+			float potential_energy = 0;
+			for (int s = 0; s < VArraySize(m_stars); s++)
+				potential_energy += -G * mass_sun * mass_satellite / ((xn - m_stars[s]).Length());
+
+			float kinetic_energy = 0.5f * mass_satellite * vn.LengthSqr();
+
+			m_satellites[k].m_radius = (potential_energy + kinetic_energy) / 10 + 0.3f;
 		}
 	}
 	}();
@@ -794,9 +936,11 @@ void CGame::Draw()
 		{
 			for (int y = -10; y < 10; y++)
 			{
-				Vector position = Vector(x, 2, y);
+				Vector field_position = Vector(x, 2, y);
+				Vector position = field_position * m_particle_scale;
+				position.y = 2;
 				c.Vertex(position);
-				c.Vertex(position + VelocityField(position, Game()->GetTime()));
+				c.Vertex(position + VelocityField(field_position, Game()->GetTime()).Normalized());
 			}
 		}
 
@@ -806,7 +950,7 @@ void CGame::Draw()
 		{
 			for (int y = -10; y < 10; y++)
 			{
-				Vector position = Vector(x, 2, y);
+				Vector position = Vector(x*m_particle_scale, 2, y*m_particle_scale);
 				Matrix4x4 m;
 				m.SetTranslation(position);
 				c.LoadTransform(m);
@@ -817,9 +961,13 @@ void CGame::Draw()
 
 		Matrix4x4 m;
 		c.SetUniform("vecColor", Vector4D(1, 0.8f, 0, 1));
-		m.SetTranslation(Vector(0, 2, 0));
-		c.LoadTransform(m);
-		c.RenderBox(Vector(-0.2f, -0.2f, -0.2f), Vector(0.2f, 0.2f, 0.2f));
+
+		for (int k = 0; k < VArraySize(m_stars); k++)
+		{
+			m.SetTranslation(m_stars[k]);
+			c.LoadTransform(m);
+			c.RenderBox(Vector(-0.2f, -0.2f, -0.2f), Vector(0.2f, 0.2f, 0.2f));
+		}
 
 		Vector4D path_colors[] = {
 			Vector4D(1, 0, 0, 1),
@@ -828,6 +976,8 @@ void CGame::Draw()
 			Vector4D(1, 1, 1, 1),
 			Vector4D(0, 0, 0, 1),
 			Vector4D(1, 1, 0, 1),
+			Vector4D(0, 1, 1, 1),
+			Vector4D(1, 0, 1, 1),
 		};
 
 		int path = 0;
@@ -861,11 +1011,54 @@ void CGame::Draw()
 			path++;
 		};
 
-		//draw_particle(m_particle_variable_position, VelocityField(m_particle_variable_position, Game()->GetTime()));
-		//draw_particle(m_particle_fixed_position, VelocityField(m_particle_fixed_position, Game()->GetTime()));
+#if 0
+		for (int k = 0; k < VArraySize(m_particles); k++)
+		{
+			Vector v = m_particles[k];
+			v = v * m_particle_scale;
+			v.y = 2;
+			draw_particle(v, Vector(), 0.1);
+		}
+#endif
 
+		path = VArraySize(m_particles);
+
+#if 1
 		for (int k = 0; k < VArraySize(m_satellites); k++)
+		{
 			draw_particle(m_satellites[k].m_position, m_satellites[k].m_velocity, m_satellites[k].m_radius);
+		}
+#endif
+
+		/*{
+			c.ResetTransformations();
+			c.SetUniform("vecColor", Vector4D(1.0, 0.8, 0.1, 1));
+
+			Matrix4x4 m;
+			float t = Game()->GetTime();
+			m.SetTranslation(Vector(cos(t/1), 3, sin(t/1)));
+			c.LoadTransform(m);
+			c.RenderBox(Vector(-0.1, -0.1, -0.1), Vector(0.1, 0.1, 0.1));
+		}*/
+
+#if 0
+		c.ResetTransformations();
+		c.SetUniform("vecColor", Vector4D(1, 0.8, 0.2, 1));
+
+		c.BeginRenderLines();
+		auto f = [](float t) -> Vector
+		{
+			return Vector(-3 + 2/(1+exp(-2*t)), 0, t*t+(1.0f/3)*exp(-5*t));
+		};
+		for (int k = 0; k < 10000; k++)
+		{
+			float t = (float)k/100;
+
+			c.Vertex(f(t)*m_particle_scale + Vector(0,2,0));
+			c.Vertex(f(t+0.01f)*m_particle_scale + Vector(0,2,0));
+		}
+		c.EndRender();
+#endif
 	}
 
 	pRenderer->FinishRendering(&r);
@@ -1102,8 +1295,8 @@ void CGame::GameLoop()
 		float dt = flCurrentTime - flPreviousTime;
 
 		// Keep dt from growing too large.
-		//if (dt > 0.15f)
-		//	dt = 0.15f;
+		if (dt > 0.15f)
+			dt = 0.15f;
 
 		Update(dt);
 
