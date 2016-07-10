@@ -23,6 +23,9 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
 
 #include <strutils.h>
 #include <common_platform.h>
@@ -50,8 +53,17 @@ CApplication::CApplication(int argc, char** argv)
 
 bool CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, bool bResizeable)
 {
-	if (!glfwInit())
-	{
+#ifdef __APPLE__
+	// On macOS, glfwInit() can change the current directory.
+	// See http://www.glfw.org/docs/latest/group__init.html
+	char *cwd = getcwd(0, 0);
+	int ret = glfwInit();
+	chdir(cwd);
+	free(cwd);
+#else
+	int ret = glfwInit();
+#endif
+	if (!ret) {
 		printf("glfwInit failed\n");
 		exit(1);
 	}
