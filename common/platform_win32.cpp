@@ -162,8 +162,10 @@ bool IsFile(const string& sPath)
 	if (hFind == INVALID_HANDLE_VALUE)
 		return false;
 
-	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		FindClose(hFind);
 		return false;
+	}
 
 	return true;
 }
@@ -181,8 +183,10 @@ bool IsDirectory(const string& sPath)
 	if (hFind == INVALID_HANDLE_VALUE)
 		return false;
 
-	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		FindClose(hFind);
 		return true;
+	}
 
 	return false;
 }

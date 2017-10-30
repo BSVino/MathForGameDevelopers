@@ -306,8 +306,7 @@ int _glfwReadTGA( _GLFWstream *s, GLFWimage *img, int flags )
         swapy = 0;
         break;
     }
-    if( (swapy && !(flags & GLFW_ORIGIN_UL_BIT)) ||
-        (!swapy && (flags & GLFW_ORIGIN_UL_BIT)) )
+    if( swapy != (flags & GLFW_ORIGIN_UL_BIT))
     {
         src = pix;
         dst = &pix[ (h.height-1)*h.width*bpp ];

@@ -98,7 +98,7 @@ bool CApplication::OpenWindow(size_t iWidth, size_t iHeight, bool bFullscreen, b
 		return false;
 	}
 
-	glfwSetWindowTitle((char*)L"Math for Game Developers");
+	glfwSetWindowTitle("Math for Game Developers");
 
 	int iScreenWidth;
 	int iScreenHeight;
