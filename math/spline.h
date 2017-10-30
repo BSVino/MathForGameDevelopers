@@ -5,7 +5,7 @@
 struct CubicSpline
 {
 	vec3 m_points[SPLINE_POINTS];
-	vec3 m_coeffs[SPLINE_POINTS-1][4];
+	vec3 m_coeffs[SPLINE_POINTS][4];
 	float m_lengths[SPLINE_POINTS - 1];
 
 	// Spline construction, Burden & Faires - Numerical Analysis 9th, algorithm 3.4
@@ -15,7 +15,7 @@ struct CubicSpline
 
 		vec3 a[SPLINE_POINTS];
 		for (int i = 1; i <= n - 1; i++)
-			a[i] = 3 * ((m_points[i + 1] - 2*m_points[i] + m_points[i - 1]));
+			a[i] = 3 * (m_points[i + 1] - 2*m_points[i] + m_points[i - 1]);
 
 		float l[SPLINE_POINTS];
 		float mu[SPLINE_POINTS];

@@ -2967,7 +2967,10 @@ static stbi_uc *tga_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       skip(s, tga_palette_start );
       //   load the palette
       tga_palette = (unsigned char*)malloc( tga_palette_len * tga_palette_bits / 8 );
-      if (!tga_palette) return epuc("outofmem", "Out of memory");
+	  if (!tga_palette) {
+		  free(tga_data);
+		  return epuc("outofmem", "Out of memory");
+	  }
       if (!getn(s, tga_palette, tga_palette_len * tga_palette_bits / 8 )) {
          free(tga_data);
          free(tga_palette);
@@ -3492,6 +3495,8 @@ static stbi_uc *pic_load(stbi *s,int *px,int *py,int *comp,int req_comp)
 
    // intermediate buffer is RGBA
    result = (stbi_uc *) malloc(x*y*4);
+   if (!result) return epuc("cannot allocate", "cannot allocate memory");
+
    memset(result, 0xff, x*y*4);
 
    if (!pic_load2(s,x,y,comp, result)) {
